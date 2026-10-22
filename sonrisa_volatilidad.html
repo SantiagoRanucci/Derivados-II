@@ -1,0 +1,1604 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sonrisas de volatilidad</title>
+<!-- Plotly (como en superficie_dupire.html) para las superficies 3D; sin internet se usa un visor 3D propio -->
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--ink:#1b2432;--muted:#5a6575;--line:#e2e7ee;--accent:#1f77b4;--soft:#eef4fa}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:linear-gradient(135deg,#0d2740,#1f5a8a);color:#fff;padding:46px 0 38px}
+header h1{margin:0 0 6px;font-size:clamp(28px,5vw,42px);letter-spacing:-.5px}
+header p{margin:0;font-size:18px;opacity:.9;max-width:760px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 18px}
+nav{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+nav .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:6px;padding-bottom:6px}
+nav a{white-space:nowrap;text-decoration:none;color:var(--muted);font-size:14px;padding:6px 11px;border-radius:999px}
+nav a:hover{background:var(--soft);color:var(--ink)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px;margin:24px 0;box-shadow:0 1px 2px rgba(20,40,70,.04)}
+h2{margin:0 0 4px;font-size:26px;letter-spacing:-.3px}
+h3{margin:22px 0 6px;font-size:19px}
+p{margin:10px 0}
+.lead{color:var(--muted);margin-top:0}
+.how{background:var(--soft);border-left:4px solid var(--accent);padding:12px 16px;border-radius:8px;margin:16px 0;font-size:15px}
+table.tbl{border-collapse:collapse;width:100%;margin:14px 0;font-size:14.5px}
+table.tbl th{background:#1f2d3d;color:#fff;text-align:left;padding:9px 11px;font-weight:600}
+table.tbl td{padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+table.tbl tr:nth-child(even) td{background:#f8fafc}
+.tablewrap{overflow-x:auto}
+.widget{margin-top:18px;border:1px solid var(--line);border-radius:14px;padding:16px;background:#fbfcfe}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{border:1px solid #cfd8e3;background:#fff;color:var(--ink);padding:6px 12px;border-radius:999px;font-size:13.5px;cursor:pointer}
+.chip:hover{background:var(--soft);border-color:var(--accent)}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px 28px;margin-bottom:8px}
+.ctop{display:flex;align-items:center;gap:8px;font-size:14px}
+.ctop label{flex:1;color:var(--muted)}
+.cval{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);min-width:54px;text-align:right}
+.play{border:1px solid #cfd8e3;background:#fff;border-radius:6px;width:26px;height:22px;font-size:11px;cursor:pointer;padding:0;line-height:1}
+.play:hover{background:var(--soft)}
+input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0 6px}
+.charts{display:grid;gap:16px;grid-template-columns:1fr;margin-top:8px}
+.charts.two{grid-template-columns:1fr 1fr}
+@media(max-width:900px){.charts.two{grid-template-columns:1fr}section.card{padding:20px 16px}}
+.chart{position:relative;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 8px 4px}
+.chead{display:flex;align-items:center;gap:8px;padding:0 4px 4px 8px}
+.ctitle{flex:1;font-weight:600;font-size:14.5px;padding:0;color:#2b3648}
+.fsbtn{border:1px solid #cfd8e3;background:#fff;color:var(--ink);border-radius:8px;padding:4px 10px;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.fsbtn:hover{background:var(--soft);border-color:var(--accent)}
+.cbody{position:relative}
+.plotly-host{width:100%;height:480px}
+.chart.is-fs{background:#fff;display:flex;flex-direction:column;border-radius:0;padding:14px 18px;width:100%;height:100%;box-sizing:border-box}
+.chart.is-fs .ctitle{font-size:18px}
+.chart.is-fs .fsbtn{font-size:14px;padding:7px 14px}
+.chart.is-fs .cbody{flex:1;min-height:0;overflow:hidden}
+.chart.is-fs svg{width:100%;height:100%}
+.chart.is-fs .plotly-host{position:absolute;inset:0;height:100%}
+.chart.fs-fallback{position:fixed;inset:0;z-index:1000;border:0}
+.chart svg{width:100%;height:auto;display:block;touch-action:pan-y}.surface3d-canvas{display:block;width:100%;height:440px;touch-action:none;cursor:grab;border-radius:8px}.surface3d-canvas:active{cursor:grabbing}
+.tip{position:absolute;pointer-events:none;background:rgba(20,30,45,.93);color:#fff;font-size:12.5px;padding:7px 10px;border-radius:8px;line-height:1.5;white-space:nowrap;z-index:3}
+.info{margin-top:12px;padding:11px 14px;background:var(--soft);border-radius:10px;font-size:14.5px}
+.legend3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:14px 0}
+.legend3>div{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fbfcfe;font-size:14.5px}
+.legend3>div>b:first-child{display:block;margin-bottom:2px}
+footer{color:var(--muted);font-size:13.5px;padding:10px 0 50px}
+/* gráficos SVG */
+svg text{font:12px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;fill:#4a5568}
+svg .grid{stroke:#e9edf3;stroke-width:1}
+svg .axis{stroke:#9aa5b5;stroke-width:1.2}
+svg .alabel{font-size:12.5px;fill:#5a6575}
+svg .legend{font-size:12.5px;fill:#2b3648}
+svg .vlab{font-size:11.5px;font-weight:600}
+svg .xh{stroke:#8793a5;stroke-width:1;stroke-dasharray:3 3}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <h1>📈 Sonrisas de volatilidad</h1><h2 font-style: italic;>Lic. Santiago Ranucci </h2>
+  <br>
+  <p>Qué son, por qué existen y cómo se deforman ante eventos inesperados, con gráficos interactivos para jugar con los números.</p>
+</div></header>
+
+<nav><div class="wrap">
+  <a href="#idea">1 · La idea</a><a href="#variantes">2 · Variantes</a><a href="#heston">3 · Volatilidad estocástica</a>
+  <a href="#tiempo">4 · Tiempo y superficie</a><a href="#eventos">5 · Eventos inesperados</a><a href="#fecha">6 · Eventos con fecha</a><a href="#modelos">7 · Otros modelos</a><a href="#simuladores">8 · Volatilidad Local y Estocastica</a><a href="#resumen">9 · Resumen</a>
+</div></nav>
+
+<main class="wrap">
+
+<section class="card" id="idea">
+  <h2>1. La idea</h2>
+  <p class="lead">Black-Scholes dice "línea plana". El mercado dice otra cosa.</p>
+  <p>Black-Scholes supone que el subyacente tiene <b>una sola volatilidad σ constante</b>. Si fuera cierto, al tomar los precios de opciones de distintos strikes e <b>invertir</b> la fórmula (la <i>volatilidad implícita</i>) obtendríamos la misma σ para todos: una línea plana.</p>
+  <p>En el mercado real eso <b>rara vez</b> pasa: graficada contra el strike, la vol implícita dibuja una curva, la <b>sonrisa</b> (<i>smile</i>) o <b>mueca</b> (<i>smirk / skew</i>). ¿Por qué? Porque la distribución real de retornos <b>no es lognormal</b>: tiene <i>colas pesadas</i> (los movimientos extremos son más probables de lo que dice Black-Scholes) y <i>asimetría</i> (en acciones, las caídas bruscas son más probables que las subas bruscas), más la demanda de cobertura.</p>
+  <div class="tablewrap"><table class="tbl"><thead><tr><th>Concepto</th><th>Cómo se mide acá</th></tr></thead><tbody>
+    <tr><td><b>Nivel (ATM)</b></td><td>vol implícita en el forward</td></tr>
+    <tr><td><b>Skew (asimetría)</b></td><td>vol(strike 90% del precio ATM) − vol(strike 110% del precio ATM). Positivo → los puts son más caros que los calls</td></tr>
+    <tr><td><b>Convexidad (sonrisa)</b></td><td>promedio de vol(90% del precio ATM) y vol(110% del precio ATM) − vol ATM. Positivo → ambas puntas caras</td></tr></tbody></table></div>
+  <h3>El mismo mercado, dos miradas</h3>
+  <p>A la izquierda, la vol implícita de un mercado con <b>saltos ocasionales</b> (modelo de Merton) contra la línea plana de Black-Scholes. A la derecha, lo que hay detrás: la <b>distribución de probabilidad del precio a 3 meses</b> que implican esos precios (derivada segunda del precio de la call respecto del strike, <i>Breeden-Litzenberger</i>).</p>
+  <div class="how">👉 La cola izquierda gorda de la derecha <b>es</b> el smirk de la izquierda: los puts fuera del dinero son caros porque el mercado asigna más probabilidad a las caídas fuertes. Mové <b>μJ</b> (salto medio) con el slider o apretá ▶ y mirá cómo la sonrisa <b>gira</b> de un lado al otro. Con λ = 0 desaparece la sonrisa.</div>
+  <div class="widget" id="w-s1"></div>
+
+  <!-- Copia desde aquí hasta el final de la etiqueta </div> -->
+<div style="margin-top: 20px; padding: 20px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; font-family: sans-serif; font-size: 14px; color: #333; line-height: 1.6;">
+  <h4 style="margin-top: 0; margin-bottom: 12px; color: #111; font-size: 16px;">💡 Guía rápida de los controles (Sliders)</h4>
+  <ul style="margin: 0; padding-left: 20px;">
+    <li style="margin-bottom: 8px;"><strong>Vol de la difusión &sigma; (Volatilidad de difusión):</strong> Representa el movimiento diario, continuo y normal del precio del activo. Es la fluctuación constante debido al ruido habitual del mercado, sin tener en cuenta eventos extremos o sorpresas repentinas.</li>
+    <li style="margin-bottom: 8px;"><strong>Saltos por año &lambda; (Frecuencia de saltos):</strong> Define la cantidad promedio de eventos extremos o noticias extraordinarias que se esperan en un año. Controla qué tan seguido ocurren esos movimientos bruscos e inesperados en el precio.</li>
+    <li style="margin-bottom: 8px;"><strong>Salto medio &mu;<sub>J</sub> (Magnitud media del salto):</strong> Determina la dirección y el tamaño promedio del impacto (en porcentaje) que causa un evento extremo cuando ocurre. Puede ser negativo (temor a desplomes) o positivo (expectativa de subidas violentas).</li>
+    <li style="margin-top: 0; margin-bottom: 0;"><strong>Dispersión del salto &sigma;<sub>J</sub> (Incertidumbre del salto):</strong> Mide la variabilidad o el grado de incertidumbre sobre el tamaño real del salto. Indica qué tan diferente puede llegar a ser el impacto real frente al promedio configurado en el salto medio.</li>
+  </ul>
+
+</div>
+
+</section>
+
+<section class="card" id="variantes">
+  <h2>2. Zoológico de sonrisas: las variantes</h2>
+  <p class="lead">La forma de la sonrisa delata de qué lado está el miedo.</p>
+  <div class="legend3">
+    <div><b>📝 Sonrisa simétrica</b>Típica de <b>FX</b>. Forma de "U": el mercado teme movimientos grandes en cualquier dirección.</div>
+    <div><b>📉 Smirk bajista (skew)</b>Típica de <b>acciones e índices</b>. Cae hacia la derecha: se teme el crash y se paga cobertura (puts).</div>
+    <div><b>📈 Smirk alcista (reverse skew)</b>Típica de <b>commodities</b> (gas, granos), acciones en <i>short squeeze</i> o monedas en riesgo de devaluar. Sube hacia la derecha: se temen las subas bruscas.</div>
+  </div>
+  <div class="how">Acá solo cambia el <b>signo del salto medio</b>: negativo → caídas, cero → simétrico, positivo → subas. Subí λ (más saltos) o |μJ| (saltos más grandes) y mirá cómo las tres se deforman a la vez.</div>
+  <div class="widget" id="w-s2"></div>
+</section>
+
+<section class="card" id="heston">
+  <h2>3. Otro motor: volatilidad estocástica (Heston)</h2>
+  <p class="lead">Los saltos no son la única forma de generar una sonrisa.</p>
+  <p>En Heston la propia volatilidad se mueve al azar. Dos parámetros dan la forma:</p>
+  <p>• <b>ξ (vol de la vol)</b>: cuanto más alta, más <b>convexa</b> la sonrisa (colas más pesadas). Con ξ → 0 volvemos a Black-Scholes.<br>
+     • <b>ρ (correlación spot-vol)</b>: es el <b>efecto apalancamiento</b>. En acciones ρ &lt; 0: cuando el precio cae, la vol sube, los puts valen más y aparece el smirk bajista. Con ρ &gt; 0 se invierte (commodities, squeeze); con ρ = 0 queda simétrica.</p>
+  <div class="how">Probá los botones de arriba (acciones / FX / commodities) y después mové ρ con el slider o con ▶.</div>
+  <div class="widget" id="w-s3"></div>
+
+  <div style="margin-top: 20px; padding: 20px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; font-family: sans-serif; font-size: 14px; color: #333; line-height: 1.6;">
+  <h4 style="margin-top: 0; margin-bottom: 12px; color: #111; font-size: 16px;">💡 Guía rápida de los controles (Modelo Heston)</h4>
+  <ul style="margin: 0; padding-left: 20px;">
+    <li style="margin-bottom: 8px;"><strong>Correlación spot-vol &rho; (Efecto apalancamiento):</strong> Determina la relación entre la dirección del precio y su volatilidad. Si es negativa (acciones), la volatilidad sube cuando el precio cae; si es positiva (commodities), la volatilidad sube cuando el precio sube.</li>
+    <li style="margin-bottom: 8px;"><strong>Vol de la vol &xi; (Volatilidad de la volatilidad):</strong> Mide la velocidad o intensidad con la que cambia la propia volatilidad. Cuanto más alta es, más "convexa" o acentuada se vuelve la curva (sonrisa más marcada).</li>
+    <li style="margin-bottom: 8px;"><strong>Reversión &kappa; (Velocidad de reversión a la media):</strong> Define qué tan rápido tiende a regresar la volatilidad actual hacia su nivel promedio de largo plazo tras sufrir un shock en el mercado.</li>
+    <li style="margin-bottom: 8px;"><strong>Vol base:</strong> Es el nivel inicial o punto de partida de la volatilidad del activo al momento de realizar la valoración de las opciones.</li>
+    <li style="margin-top: 0; margin-bottom: 0;"><strong>Vencimiento (meses):</strong> Es el horizonte temporal del contrato de la opción. A mayor plazo, los shocks tienden a promediarse y la curva de volatilidad suele volverse más plana.</li>
+  </ul>
+</div>
+
+
+</section>
+
+<section class="card" id="tiempo">
+  <h2>4. La sonrisa en el tiempo: estructura temporal y superficie</h2>
+  <p class="lead">La sonrisa depende también del vencimiento.</p>
+  <p>Regla general: es <b>más pronunciada en vencimientos cortos</b> y se aplana al alargar el plazo (los shocks se "promedian"). Juntando strike y vencimiento se obtiene la <b>superficie de volatilidad implícita</b>: eje X = strike, eje Y = vencimiento y eje Z/altura = volatilidad. Podés <b>rotar la superficie arrastrando</b>, acercar/alejar con la rueda del mouse y mover el cursor sobre los nodos para consultar sus valores. Usa los parámetros de Heston definidos en la sección 3.</p>
+  <div class="widget" id="w-s4"></div>
+</section>
+
+<section class="card" id="eventos">
+  <h2>5. 🔥 Eventos inesperados: ¿cómo se mueve la sonrisa?</h2>
+  <p class="lead">Un shock mueve el spot <i>y</i> cambia el estado de la volatilidad.</p>
+  <p>Se modela con Heston así:</p>
+  <p>1. El spot salta un <i>shock</i> (por ejemplo −15%).<br>
+     2. La vol ATM reacciona: Δσ = −β · shock. Con <b>β &gt; 0</b> (mercado de acciones) la vol <b>sube cuando el precio cae</b> y baja cuando sube. Con <b>β &lt; 0</b> (commodities / squeeze) es al revés: <b>la vol sube cuando el precio sube</b>.<br>
+     3. La vol de largo plazo se mueve solo una fracción (<i>persistencia</i>): los eventos extremos se desvanecen.<br>
+     4. <b>Pánico</b>: si el movimiento es el <i>adverso</i> para ese mercado (caída en acciones, suba en commodities), también aumenta la vol de la vol ξ: la gente paga más por protección y el smirk se empina.<br>
+     5. Se recalcula toda la sonrisa para los <b>mismos strikes</b>, los que ya cotizan en el mercado.</p>
+  <div class="how">Gris punteado = antes del evento · color = después (🔴 caída, 🟢 suba) · rombo = nuevo ATM. Mové el shock con el slider o apretá ▶ para barrer de −25% a +25%. Probá los cuatro escenarios predefinidos.</div>
+  <div class="widget" id="w-s5"></div>
+
+  <div style="margin-top: 20px; padding: 20px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; font-family: sans-serif; font-size: 14px; color: #333; line-height: 1.6;">
+  <h4 style="margin-top: 0; margin-bottom: 12px; color: #111; font-size: 16px;">💡 Guía rápida de los controles (Eventos Inesperados)</h4>
+  <ul style="margin: 0; padding-left: 20px;">
+    <li style="margin-bottom: 8px;"><strong>Shock al spot:</strong> Representa el cambio porcentual inmediato y drástico en el precio actual del activo debido a una noticia sorpresa (por ejemplo, un desplome del -15% o una subida repentina).</li>
+    <li style="margin-bottom: 8px;"><strong>&beta;: vol ATM por unidad de retorno:</strong> Mide la sensibilidad y dirección con la que reacciona la volatilidad ante el shock. Si es positivo (acciones), una caída de precio dispara la volatilidad; si es negativo (commodities), la volatilidad se dispara cuando el precio sube.</li>
+    <li style="margin-bottom: 8px;"><strong>Persistencia de la vol de largo plazo:</strong> Controla qué fracción del impacto se queda grabada en las expectativas futuras. Un valor alto significa que el mercado cree que la incertidumbre durará mucho tiempo, mientras que un valor bajo indica que el pánico se desvanecerá rápido.</li>
+    <li style="margin-bottom: 8px;"><strong>Pánico (sube &xi; en el escenario adverso):</strong> Simula el comportamiento emocional de los inversores. Multiplica la volatilidad de la volatilidad (&xi;) solo cuando ocurre el movimiento que más perjudica a ese mercado, haciendo que las colas de la curva se empinen bruscamente por la alta demanda de cobertura.</li>
+    <li style="margin-bottom: 8px;"><strong>Correlación spot-vol &rho;:</strong> Mantiene la relación estructural de fondo entre el movimiento del precio y su volatilidad para el cálculo de la curva tras el evento.</li>
+    <li style="margin-top: 0; margin-bottom: 0;"><strong>Vol de la vol &xi;:</strong> Establece la base de incertidumbre de la propia volatilidad antes de que el factor de pánico actúe.</li>
+  </ul>
+  </div>
+
+
+
+  <h3>Lo que muestra el modelo</h3>
+  <p><b>Caída en acciones:</b> la curva entera sube (la vol ATM se dispara) y el smirk se empina: los puts de strikes bajos se encarecen más que el resto. <b>Suba en acciones:</b> la vol ATM cae con fuerza; el skew en puntos casi no cambia, así que respecto del nivel se ve más marcado. <b>Squeeze en commodities:</b> la vol sube y las calls (strikes altos) se encarecen más que el resto.</p>
+  <h3>Escenarios de un vistazo</h3>
+  <div class="tablewrap" id="scenario-table"></div>
+
+  
+</section>
+
+<section class="card" id="fecha">
+  <h2>6. 🗳️ Eventos con fecha: resultados, elecciones, decisiones de política</h2>
+  <p class="lead">Cuando se sabe <i>cuándo</i> va a pasar algo importante, la incertidumbre se concentra en un día.</p>
+  <p>Modelo: el precio sigue su difusión normal y, <b>el día del evento</b>, pega un salto binario: sube <i>a</i> o baja <i>b</i> (la probabilidad se calibra para que no haya arbitraje). Cambiando <i>a</i> y <i>b</i> se representan sorpresas <b>simétricas</b>, <b>bajistas</b> (pequeña chance de gran caída) o <b>alcistas</b>.</p>
+  <div class="how"><b>Izquierda:</b> con un evento binario (dos resultados posibles) la curva no es una "U" sino una <b>joroba</b>: las opciones ATM son las más caras porque el precio casi seguro va a salir de donde está, y los extremos quedan relativamente baratos. Una sorpresa bajista inclina la joroba hacia los puts; una alcista, hacia los calls. Con resultados más variados (distribución continua) la forma se acerca más a una sonrisa. <b>Derecha:</b> los vencimientos que <b>incluyen</b> el evento tienen vol más alta (el "escalón" en el día del evento). Cuando el evento pasa, esa prima <b>desaparece</b> (<i>vol crush</i>): por eso la vol cae aunque el mercado se mueva fuerte.</div>
+  <div class="widget" id="w-s6"></div>
+
+  <div style="margin-top: 20px; padding: 20px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; font-family: sans-serif; font-size: 14px; color: #333; line-height: 1.6;">
+  
+  <!-- EXPLICACIÓN DE LOS SLIDERS -->
+  <h4 style="margin-top: 0; margin-bottom: 12px; color: #111; font-size: 16px;">💡 Guía rápida de los controles (Eventos con Fecha)</h4>
+  <ul style="margin: 0; padding-left: 20px; margin-bottom: 24px;">
+    <li style="margin-bottom: 8px;"><strong>Tamaño del salto del evento:</strong> Define la magnitud o el impacto porcentual esperado (hacia arriba o hacia abajo) que tendrá el precio el día exacto en que se publique la noticia o se conozca el resultado.</li>
+    <li style="margin-bottom: 8px;"><strong>Día del evento:</strong> Indica la fecha exacta en el calendario (por ejemplo, el día 14) en la que ocurrirá el acontecimiento. Sirve para ver qué contratos de opciones lo incluyen en su vida útil y cuáles vencen antes.</li>
+    <li style="margin-bottom: 8px;"><strong>Vencimiento de la sonrisa (días):</strong> Establece el plazo de tiempo (en días) del contrato de opciones que estás analizando en el gráfico de la izquierda para ver cómo se deforma su curva de volatilidad.</li>
+    <li style="margin-top: 0; margin-bottom: 0;"><strong>Vol base:</strong> Representa el nivel de volatilidad normal y constante del activo cuando no hay eventos extraordinarios a la vista.</li>
+  </ul>
+
+  <!-- EXPLICACIÓN DE LOS GRÁFICOS -->
+  <h4 style="margin-top: 0; margin-bottom: 12px; color: #111; font-size: 16px;">📊 ¿Qué muestra cada gráfico?</h4>
+  <ul style="margin: 0; padding-left: 20px;">
+    <li style="margin-bottom: 8px;"><strong>Gráfico Izquierdo (Curva de vol a X días según el tipo de sorpresa):</strong> Muestra cómo se deforma la sonrisa de volatilidad dependiendo de la dirección esperada del evento. En lugar de una "U", dibuja una <strong>joroba</strong> (curva azul): las opciones ATM (cerca del precio actual) son las más caras porque el mercado sabe que el precio se moverá con fuerza hacia un lado o hacia el otro, abandonando la zona del <i>spot</i> actual. Si se espera un sesgo bajista, la joroba se inclina a la izquierda (roja); si es alcista, a la derecha (verde).</li>
+    <li style="margin-top: 0; margin-bottom: 0;"><strong>Gráfico Derecho (Vol ATM por vencimiento):</strong> Muestra el "escalón" de incertidumbre en el tiempo. La volatilidad se mantiene baja para las opciones que vencen antes del evento (línea naranja plana a la izquierda), pero sufre un <strong>disparo vertical el día exacto del evento</strong> (día 14). A partir de ahí, la volatilidad implícita va disminuyendo gradualmente en los vencimientos más largos porque el impacto de ese día único se va diluyendo o "promediando" en plazos mayores.</li>
+  </ul>
+
+</div>
+
+
+</section>
+
+<section class="card" id="modelos">
+  <h2>7. Otros modelos para construir la superficie de volatilidad</h2>
+  <p class="lead">Hay <strong> 3 familias principales</strong> de modelos con <strong>cambios de volatilidad</strong>. Los cuatro motores de la sección 8 permiten explorar Dupire, Derman–Kani, SABR y Bates con parámetros modificables; sus datos son sintéticos/ilustrativos, no cotizaciones de mercado calibradas.</p>
+  <h3>7.1 Volatilidad local (Local Volatility, LV)</h3>
+  <p><b>Bruno Dupire.</b> La volatilidad instantánea depende del precio del subyacente y del tiempo, σ<sub>loc</sub>(S,t). En condiciones ideales, se infiere de la superficie completa de precios de opciones europeas y reproduce exactamente los precios vanilla usados en la calibración. La trayectoria de volatilidad queda determinada por S y t; no tiene un factor de volatilidad aleatorio independiente. Es útil para valorar y cubrir exóticas dependientes de la trayectoria, aunque puede producir dinámicas futuras de sonrisa poco realistas y es sensible al ruido de la superficie.</p>
+  <p><b>Emanuel Derman e Ira Kani.</b> Enfoque de árboles/trinómicos implícitos que construye una dinámica de precios consistente con la distribución implícita en las opciones. Es una formulación discreta relacionada con la idea de volatilidad local: el árbol se ajusta para reproducir precios de mercado y facilitar valoración por backward induction. La estabilidad depende de la calidad de los datos y de la construcción del árbol.</p>
+  <h3>7.2 Volatilidad estocástica (Stochastic Volatility, SV)</h3>
+  <p><b>Heston.</b> La varianza sigue un proceso aleatorio con reversión a la media; la correlación entre retornos y varianza permite generar skew. Los parámetros clave son varianza inicial, nivel de largo plazo, velocidad de reversión, volatilidad de la varianza y correlación. Es un modelo de referencia para superficies de opciones sobre acciones e índices, pero la calibración y la dinámica de colas pueden ser difíciles.</p>
+  <p><b>SABR (Stochastic Alpha, Beta, Rho).</b> Modela conjuntamente el forward y su volatilidad: α determina el nivel de volatilidad, β la elasticidad del forward, ρ la correlación forward-volatilidad y ν (a menudo llamado vol-of-vol) la volatilidad de la volatilidad. Es especialmente popular para caps/floors y swaptions de tasas; también se usa en mercados de opciones sobre forwards. Su aproximación de volatilidad implícita es práctica para calibrar smiles, pero no es una solución universal para todos los activos ni para cualquier régimen de parámetros.</p>
+  <h3>7.3 Difusión con saltos (Jump-Diffusion)</h3>
+  <p><b>Merton.</b> Combina una difusión continua con saltos aleatorios, normalmente con tamaños lognormales y frecuencia Poisson. Captura colas pesadas y movimientos discontinuos; el simulador implementa una versión de Merton en la sección 1. Es útil para opciones sobre acciones/índices y para estudiar riesgo de gap, aunque por sí solo no describe bien toda la dinámica temporal de volatilidad.</p>
+  <p><b>Bates.</b> Combina la volatilidad estocástica de Heston con saltos de Merton en el precio. Así puede representar tanto una sonrisa/skew persistente como saltos bruscos. Es más flexible para opciones sobre acciones e índices alrededor de anuncios o eventos de gap, pero tiene más parámetros, mayor coste de calibración y riesgo de sobreajuste. En este HTML no hay todavía un motor de precios Bates implementado.</p>
+  <div class="how"><b>Alcance:</b> los motores de la sección 8 son simuladores educativos con una superficie de referencia sintética. La comparación entre modelos es útil para estudiar mecanismos y sensibilidades, pero no sustituye una calibración con cotizaciones, pruebas de ausencia de arbitraje y validación numérica de producción.</div>
+</section>
+
+<section class="card" id="simuladores">
+  <h2>8. Simuladores adicionales: Dupire, Derman–Kani, SABR y Bates</h2>
+  <p class="lead">Modificá los parámetros para observar cómo cambia la volatilidad implícita, la volatilidad local o el árbol de precios.</p>
+  <div class="how"><b>Nota metodológica.</b> La superficie de entrada usada por Dupire y el árbol se genera con una función de sonrisa sintética; no es una pantalla de mercado. SABR usa la aproximación de Hagan. Bates combina la función característica de Heston con un proceso de saltos compuesto. El árbol mostrado es una discretización trinomial de la dinámica local, inspirada en el enfoque de árboles implícitos, no una calibración completa de Derman–Kani a precios vanilla observados.</div>
+  <h3>8.1 Dupire — volatilidad local</h3>
+  <p>Dupire infiere σ<sub>loc</sub>(K,T) a partir de derivadas de los precios de calls respecto del vencimiento y del strike. El simulador parte de una sonrisa sintética y calcula esas derivadas por diferencias finitas; los bordes y las zonas de baja convexidad requieren especial cuidado.</p>
+  
+ 
+  <!-- SE CERRARON LAS ETIQUETAS PREVIAS Y EMPIEZA EL CONTENEDOR DE ANCHO COMPLETO -->
+  <div style="width: 100%; display: block; box-sizing: border-box; clear: both; margin-top: 30px; margin-bottom: 40px; padding: 0;">
+    
+    <!-- Eliminamos el max-width: 800px para que ocupe el 100% -->
+    <section style="font-family: system-ui, -apple-system, sans-serif; width: 100%; max-width: 100%; line-height: 1.6; color: #333; box-sizing: border-box;">
+      
+      <h2 style="border-bottom: 2px solid #0056b3; padding-bottom: 8px; color: #0056b3; margin-left: 0; margin-top: 0; font-size: 1.4em;">Pasos para Construir la Superficie de Volatilidad Local de Dupire</h2>
+      
+      <ol style="padding-left: 20px; margin-bottom: 24px; margin-top: 15px;">
+        <!-- Paso 1 (Único y estirado al 100%) -->
+        <li style="margin-bottom: 20px;">
+          <strong style="font-size: 1.1em;">Suavizado de la Volatilidad Implícita</strong>
+          <p style="margin-top: 6px; margin-bottom: 12px;">Se recopilan los precios de mercado y se transforman en volatilidades implícitas (BS). Se ajusta un modelo continuo libre de arbitraje (como <em>SVI</em> o <em>SABR</em>) para eliminar el ruido matemático antes de derivar.</p>
+          
+          <!-- Modelos de ajuste -->
+          <div style="padding-left: 15px; border-left: 3px solid #ccc; margin-top: 15px;">
+            <p style="margin-bottom: 10px;"><strong>Modelos de ajuste y sus ecuaciones:</strong></p>
+            
+            <div style="margin-bottom: 16px;">
+              <p style="margin-bottom: 6px;"><strong>SVI (Stochastic Volatility Inspired)</strong> parametriza la varianza implícita total (w) por strike (k) fijando un vencimiento:</p>
+              <code style="display: block; background-color: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; overflow-x: auto;">w(k) = a + b * [ ρ * (k - m) + √( (k - m)² + σ² ) ]</code>
+              <p style="font-size: 0.9em; color: #666; margin-top: 4px;">Donde los parámetros controlan el nivel (a), la pendiente (b), la rotación (ρ), el desplazamiento (m) y la suavidad (σ).</p>
+            </div>
+            
+            <div>
+              <p style="margin-bottom: 6px;"><strong>SABR</strong> es un modelo dinámico donde el activo (F) y su volatilidad (α) evolucionan mediante ecuaciones estocásticas acopladas:</p>
+              <code style="display: block; background-color: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; overflow-x: auto;">
+                dF_t = α_t * F_t^β * dW_1<br>
+                dα_t = ν * α_t * dW_2
+              </code>
+              <p style="font-size: 0.9em; color: #666; margin-top: 4px;">Donde β maneja la elasticidad, ν la volatilidad de la volatilidad, y los procesos dW tienen una correlación ρ (asimetría).</p>
+            </div>
+          </div>
+        </li>
+      
+
+        <li style="margin-bottom: 16px;">
+          <strong>Generación de la Malla de Precios Dense</strong>
+          <p style="margin: 4px 0 0 0; color: #555;">Con la superficie implícita ya suavizada, se reconstruye una cuadrícula fina y uniforme de precios de opciones teóricos <span style="font-family: monospace; background: #f4f4f4; padding: 2px 4px;">C(K, T)</span> para cada combinación de Strike y Vencimiento.</p>
+        </li>
+        
+        <li style="margin-bottom: 16px;">
+          <strong>Cálculo de Derivadas Numéricas</strong>
+          <p style="margin: 4px 0 0 0; color: #555;">Se aproximan las derivadas parciales de la ecuación mediante esquemas de diferencias finitas en la malla:</p>
+          <ul style="margin: 4px 0 0 16px; padding-left: 0; list-style-type: circle; color: #555;">
+            <li><strong>Temporal (Calendar):</strong> dC/dT (Aproximación hacia adelante)</li>
+            <li><strong>Primera espacial:</strong> dC/dK (Diferencia central)</li>
+            <li><strong>Segunda espacial (Densidad):</strong> d²C/dK² (Diferencia central de segundo orden)</li>
+          </ul>
+        </li>
+        
+        <li style="margin-bottom: 16px;">
+          <strong>Evaluación de la Ecuación de Dupire</strong>
+          <p style="margin: 4px 0 0 0; color: #555;">Para cada punto de la malla, se sustituyen los valores en la fórmula para aislar la varianza local: <span style="font-family: monospace; font-weight: bold;">σ²(K,T) = (dC/dT + r·K·dC/dK) / (½·K² · d²C/dK²)</span>. Se aplica la raíz cuadrada para obtener la volatilidad.</p>
+        </li>
+        
+        <li style="margin-bottom: 16px;">
+          <strong>Regularización contra Arbitraje</strong>
+          <p style="margin: 4px 0 0 0; color: #555;">Se verifica que el numerador sea ≥ 0 (sin arbitraje de calendario) y el denominador sea > 0 (densidad de probabilidad positiva). Los nodos remanentes con valores negativos se truncan o interpolan con los vecinos.</p>
+        </li>
+  </ol>
+  </section>
+</div>
+
+<div class="widget" id="w-s7"></div>
+
+<!-- Contenedor principal con aislamiento y ancho completo -->
+<div style="width: 100%; display: block; box-sizing: border-box; clear: both; margin-bottom: 40px; padding: 0;">
+  
+  <section style="font-family: Arial, sans-serif; width: 100%; max-width: 100%; line-height: 1.6; color: #333; box-sizing: border-box;">
+
+    <!-- Bloque técnico destacado que actúa como separador visual interno -->
+    <div style="width: 100%; box-sizing: border-box; font-size: 0.9em; color: #444; background-color: #f8f9fa; padding: 16px; border-left: 4px solid #1a73e8; border-radius: 4px; margin-bottom: 0;">
+      <h4 style="text-decoration: underline;color: #1d00c5";font-style: italic;><strong>Volatilidad local vs. implícita a 6 meses</strong></h4>
+      Este gráfico muestra el resultado de la <strong>calibración de la superficie de Volatilidad Local de Dupire</strong>, comparándola con la curva de volatilidad implícita del mercado:<br>
+      <ul style="padding-left: 15px; margin-top: 8px; margin-bottom: 0;">
+                <li style="margin-bottom: 16px;">
+          <strong>Volatilidad Implícita de Entrada (Línea punteada):</strong> Es el <em>smile</em> o <em>skew</em> del mercado que se utiliza como dato inicial. Representa una especie de "velocidad promedio" acumulada que el mercado espera para toda la vida de la opción según cada precio de ejercicio (<em>Strike</em>).
+        </li>
+        <li style="margin-bottom: 16px;">
+          <strong>Volatilidad Local Dupire (Línea continua azul):</strong> Es la volatilidad instantánea estado-dependiente &sigma;<sub>t</sub> obtenida tras resolver la ecuación de Dupire. 
+          <br><br>
+          <strong>¿Por qué es más empinada?</strong> La volatilidad implícita del mercado es solo un promedio ponderado. Para que ese promedio final se cumpla, la volatilidad local (que actúa en el momento exacto) debe reaccionar antes y con mayor fuerza. Por eso, la curva local <em>"sobre-reacciona"</em> de forma matemática: se dispara en los strikes bajos y cae más rápido en los altos para poder replicar con exactitud los precios reales del mercado.
+        </li>
+      </ul>
+    </div>
+
+  </section>
+
+</div>
+<!-- Fin del bloque - El siguiente texto de tu página web puede ir abajo sin riesgo de solapamiento -->
+
+<!-- Contenedor principal con diseño idéntico a la Guía Rápida -->
+<div style="width: 100%; box-sizing: border-box; background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; margin-top: 25px; margin-bottom: 25px;">
+  
+  <!-- Título con icono de bombita -->
+  <h3 style="margin-top: 0; margin-bottom: 16px; font-family: Arial, sans-serif; font-size: 1.2em; color: #333; display: flex; align-items: center; gap: 8px;">
+    <span>💡</span> Explicación de los parámetros (Superficie de Volatilidad)
+  </h3>
+  
+  <!-- Lista de viñetas con formato y espaciado consistente -->
+  <ul style="padding-left: 20px; margin-top: 0; margin-bottom: 0; font-family: Arial, sans-serif; font-size: 0.95em; color: #495057; line-height: 1.6;">
+    
+    <li style="margin-bottom: 12px;">
+      <strong>Vol ATM de la superficie (%):</strong> Indica la volatilidad "At-The-Money" (en el dinero), que sirve como el nivel base de volatilidad para las opciones cuyo precio de ejercicio (strike) coincide con el precio actual del activo.
+    </li>
+    
+    <li style="margin-bottom: 12px;">
+      <strong>Skew dσ/dln(K/F):</strong> Mide el sesgo o inclinación de la curva de volatilidad respecto al precio de ejercicio (strike) relativo. Un valor negativo indica que las opciones de compra (calls) fuera del dinero o de venta (puts) dentro del dinero tienen una volatilidad implícita diferente, reflejando la asimetría del mercado.
+    </li>
+    
+    <li style="margin-bottom: 12px;">
+      <strong>Curvatura cuadrática:</strong> Representa la forma de "sonrisa" de la volatilidad. Controla qué tan rápido aumenta la volatilidad a medida que el precio de ejercicio se aleja del valor central (ATM).
+    </li>
+    
+    <li style="margin-bottom: 12px;">
+      <strong>Efecto temporal (puntos de vol/√año):</strong> Determina cómo evoluciona o se desplaza la estructura temporal de la volatilidad a lo largo del tiempo.
+    </li>
+    
+    <li style="margin-bottom: 0;">
+      <strong>Vencimiento de la curva de comparación:</strong> Establece el horizonte temporal o plazo que se toma como referencia para calibrar y comparar el modelo de volatilidad local de Dupire.
+    </li>
+    
+  </ul>
+
+</div>
+
+  <h3>8.2 Derman–Kani — árbol de precios</h3>
+  <p>El árbol propaga probabilidades neutrales al riesgo sobre nodos de precio. Esta versión educativa emplea probabilidades trinomialmente ajustadas para respetar el crecimiento esperado del activo y aproximar la varianza local proveniente de la superficie sintética; no pretende replicar toda la calibración de un árbol implícito de mercado.</p>
+  <div class="widget" id="w-s8"></div>
+<!-- Contenedor principal estilo Guía Rápida -->
+<div style="width: 100%; box-sizing: border-box; background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; margin-top: 25px; margin-bottom: 25px;">
+  
+  <!-- Título con icono de bombita -->
+  <h3 style="margin-top: 0; margin-bottom: 16px; font-family: Arial, sans-serif; font-size: 1.2em; color: #333; display: flex; align-items: center; gap: 8px;">
+    <span>💡</span> Guía rápida de los controles (Árbol Derman-Kani)
+  </h3>
+  
+  <!-- Lista de parámetros -->
+  <ul style="padding-left: 20px; margin-top: 0; margin-bottom: 0; font-family: Arial, sans-serif; font-size: 0.95em; color: #495057; line-height: 1.6;">
+    
+    <li style="margin-bottom: 12px;">
+      <strong>Vol ATM de la superficie (%):</strong> Define el nivel base de volatilidad en el dinero (*At-The-Money*). Determina la apertura o dispersión general inicial de las ramas del árbol de precios.
+    </li>
+    
+    <li style="margin-bottom: 12px;">
+      <strong>Skew dσ/dln(K/F):</strong> Controla la asimetría de la superficie sintética. Un valor negativo inclina el árbol para que los nodos inferiores tengan mayor volatilidad implícita que los superiores, capturando el sesgo del mercado.
+    </li>
+    
+    <li style="margin-bottom: 12px;">
+      <strong>Curvatura cuadrática:</strong> Ajusta la forma de "sonrisa" de la volatilidad. Define qué tan rápido se acelera la volatilidad a medida que el precio del activo se aleja de la zona central (ATM) hacia las colas.
+    </li>
+    
+    <li style="margin-bottom: 0;">
+      <strong>Pasos del árbol (1 año):</strong> Determina la profundidad o cantidad de pasos de tiempo discretos en los que se divide el año. A mayor cantidad de pasos, el árbol trinomial gana precisión numérica pero consume más recursos de cómputo.
+    </li>
+    
+  </ul>
+
+</div>
+
+
+  <h3>9.3 SABR — volatilidad estocástica</h3>
+  <p>La aproximación de Hagan expresa la volatilidad implícita en función de α, β, ρ y ν. Es muy usada para smiles de opciones sobre forwards, especialmente en tasas; la extrapolación lejos de los strikes líquidos puede ser poco fiable.</p>
+  <div class="widget" id="w-s9"></div>
+<!-- Contenedor principal estilo Guía Rápida -->
+<div style="width: 100%; box-sizing: border-box; background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; margin-top: 25px; margin-bottom: 25px;">
+  
+  <!-- Título con icono de bombita -->
+  <h3 style="margin-top: 0; margin-bottom: 16px; font-family: Arial, sans-serif; font-size: 1.2em; color: #333; display: flex; align-items: center; gap: 8px;">
+    <span>💡</span> Guía rápida de los controles (Modelo SABR)
+  </h3>
+  
+  <!-- Lista de parámetros -->
+  <ul style="padding-left: 20px; margin-top: 0; margin-bottom: 0; font-family: Arial, sans-serif; font-size: 0.95em; color: #495057; line-height: 1.6;">
+    
+    <li style="margin-bottom: 12px;">
+      <strong>α (Alfa) — escala SABR:</strong> Determina la volatilidad inicial o el nivel general de la curva. Afecta directamente la altura vertical de la sonrisa de volatilidad (sube o baja todo el nivel del <em>smile</em>).
+    </li>
+    
+    <li style="margin-bottom: 12px;">
+      <strong>β (Beta) — elasticidad del forward:</strong> Modula la relación entre el precio del activo subyacente y la volatilidad. Un β cercano a 1 emula un comportamiento lognormal (tipo Black-Scholes), mientras que un β cercano a 0 emula un comportamiento normal.
+    </li>
+    
+    <li style="margin-bottom: 12px;">
+      <strong>ρ (Rho) — correlación forward-vol:</strong> Controla la asimetría o el sesgo de la curva (<em>skew</em>). Una correlación negativa genera un sesgo bajista (los strikes bajos tienen mayor volatilidad), mientras que una positiva inclina la sonrisa hacia el otro extremo.
+    </li>
+    
+    <li style="margin-bottom: 12px;">
+      <strong>ν (Nu) — vol de la vol:</strong> Representa la volatilidad de la volatilidad misma. Modula la curvatura o el "espesor" de la sonrisa; un valor más alto genera un <em>smile</em> más cerrado en forma de "U" (más convexo en las colas).
+    </li>
+    
+    <li style="margin-bottom: 0;">
+      <strong>Vencimiento:</strong> Establece el horizonte temporal (plazo de la opción) sobre el cual se proyecta la aproximación analítica de Hagan para trazar la curva teórica.
+    </li>
+    
+  </ul>
+</div>
+
+
+<!-- ====================================================================== -->
+<!-- 1. TARJETA BLANCA: CONTROLES Y SLIDERS DEL MODELO DE BATES             -->
+<!-- ====================================================================== -->
+<div style="width: 100%; box-sizing: border-box; background-color: #ffffff; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+
+  <h3 style="margin-top: 0; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 1.25em; color: #333;">9.4 Bates — volatilidad estocástica con saltos</h3>
+  
+  <p style="margin-bottom: 20px; color: #495057; line-height: 1.6;">
+    Bates extiende Heston incorporando saltos de Poisson con tamaños lognormales. La parte de saltos contribuye a las colas y puede cambiar el skew; los parámetros extra aumentan la flexibilidad, pero también la dificultad de calibración.
+  </p>
+
+  <h3>Componentes clave del modelo</h3>
+
+  <p>El modelo divide el comportamiento del precio de un activo en dos dinámicas principales:</p>
+
+  <ol>
+    <li>
+      <strong>Estructura Continua (Heston):</strong> El precio del activo se mueve de forma continua, pero su volatilidad no es constante; varía en el tiempo siguiendo su propio proceso estocástico (proceso CIR). Tiene una propiedad de reversión a la media, lo que significa que la volatilidad tiende a regresar a un promedio de largo plazo.
+    </li>
+    <br>
+    <li>
+      <strong>Estructura de Saltos (Poisson):</strong> Añade la posibilidad de que el precio sufra variaciones discontinuas y repentinas mediante un proceso de Poisson. El tamaño de estos saltos sigue una distribución log-normal, y comúnmente se configuran con un sesgo negativo (<code>&mu;<sub>J</sub> &lt; 0</code>) para simular riesgos de crash o pánicos financieros.
+    </li>
+  </ol>
+  <br>
+
+  <div>  
+    <!-- Título con icono de bombita -->
+    <h3 style="margin-top: 0; margin-bottom: 16px; font-family: Arial, sans-serif; font-size: 1.2em; color: #333; display: flex; align-items: center; gap: 8px;">
+      <span>💡</span> Guía rápida de los controles (Modelo de Bates)
+    </h3>
+    
+    <!-- Lista de parámetros -->
+    <ul style="padding-left: 20px; margin-top: 0; margin-bottom: 0; font-family: Arial, sans-serif; font-size: 0.95em; color: #495057; line-height: 1.6;">
+      
+      <li style="margin-bottom: 12px;">
+        <strong>Volatilidad inicial / largo plazo:</strong> Establece los niveles de varianza base para el proceso estocástico continuo (heredado de Heston), dictando la altura general de la estructura temporal de volatilidad.
+      </li>
+      
+      <li style="margin-bottom: 12px;">
+        <strong>Correlación spot-vol ρ (Rho):</strong> Modula el sesgo de la sonrisa continua. Una correlación negativa genera el clásico <em>skew</em> de acciones, donde la volatilidad sube cuando el precio cae (efecto apalancamiento).
+      </li>
+      
+      <li style="margin-bottom: 12px;">
+        <strong>Vol de la vol ξ (Xi):</strong> Representa la volatilidad del proceso de varianza estocástica continuo. Incrementa de forma directa la curvatura o forma de "U" de las colas en la sonrisa.
+      </li>
+      
+      <li style="margin-bottom: 12px;">
+        <strong>Reversión κ (Kappa):</strong> Indica la velocidad con la que la volatilidad instantánea regresa hacia su media o nivel de largo plazo tras sufrir un desvío.
+      </li>
+      
+      <li style="margin-bottom: 12px;">
+        <strong>Frecuencia de saltos λ (Lambda - por año):</strong> Define el número promedio de saltos discontinuos e inesperados que ocurren en el precio del activo por unidad de tiempo.
+      </li>
+      
+      <li style="margin-bottom: 12px;">
+        <strong>Salto log medio μJ (Mu_J):</strong> Determina el tamaño promedio esperado del salto en el precio. Un valor negativo (como -0.08) emula riesgos latentes de <em>crash</em> de mercado, empinando drásticamente la curva OTM.
+      </li>
+      
+      <li style="margin-bottom: 0;">
+        <strong>Dispersión del salto σJ (Sigma_J):</strong> Mide la volatilidad o incertidumbre asociada puramente al tamaño del salto cuando este ocurre, engrosando y estirando las colas de la distribución del activo.
+      </li>
+      
+    </ul>
+</div>
+<br>
+</div>
+
+<div class="widget" id="w-s10"></div>
+
+<!-- ====================================================================== -->
+<!-- 2. TARJETA GRIS INDEPENDIENTE: EXPLICACIÓN DE LOS GRÁFICOS            -->
+<!-- ====================================================================== -->
+<div style="width: 100%; box-sizing: border-box; background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px;">
+  
+  <!-- Título con icono de gráfico -->
+  <h3 style="margin-top: 0; margin-bottom: 16px; font-family: Arial, sans-serif; font-size: 1.2em; color: #333; display: flex; align-items: center; gap: 8px;">
+    <span>📊</span> ¿Qué muestra cada gráfico? (Bates vs. Heston)
+  </h3>
+  
+  <!-- Lista explicativa de los gráficos -->
+  <ul style="padding-left: 20px; margin-top: 0; margin-bottom: 16px; font-family: Arial, sans-serif; font-size: 0.95em; color: #495057; line-height: 1.6;">
+    <li style="margin-bottom: 14px;">
+      <strong>Gráfico Izquierdo (Bates vs. Heston · sonrisa a 3 meses):</strong> Compara el perfil de volatilidad implícita según los precios de ejercicio (<em>Strikes</em>). 
+      <br>
+      Notá cómo la línea discontinua de <em>Heston sin saltos</em> muestra un sesgo continuo tradicional, mientras que la línea violeta de <strong>Bates</strong> se levanta drásticamente en los extremos (forma de sonrisa más cerrada y colas pesadas). Esto ocurre porque el componente de saltos discretos modela la probabilidad de movimientos bruscos e inesperados a corto plazo.
+    </li>
+    <li style="margin-bottom: 0;">
+      <strong>Gráfico Derecho (Estructura temporal de la vol ATM):</strong> Muestra cómo evoluciona la volatilidad <em>At-The-Money</em> a medida que aumenta el plazo de vencimiento (de 2 a 12 meses).
+      <br>
+      La inclusión de saltos en el modelo de Bates (línea naranja) genera un desplazamiento vertical completo de la estructura temporal respecto a Heston (línea discontinua), permitiendo capturar dinámicas temporales más complejas y realistas en plazos cortos.
+    </li>
+  </ul>
+
+  <!-- Nota al pie integrada -->
+  <p style="margin: 12px 0 0 0; font-family: Arial, sans-serif; font-size: 0.88em; color: #6c757d; border-top: 1px solid #e9ecef; padding-top: 10px; font-style: italic;">
+    <strong>Verificación técnica:</strong> Si configurás la frecuencia de saltos en cero (λ = 0), la curva de Bates colapsa matemáticamente y coincide de forma exacta con la de Heston puro.
+  </p>
+</div>
+
+<!-- INICIO GRÁFICO: MODELO DE BATES (LEYENDA ABAJO A LA DERECHA) -->
+<div class="bates-chart-container" style="background-color: white; padding: 20px; font-family: system-ui, -apple-system, sans-serif; width: 100%; max-width: 900px; box-sizing: border-box; overflow: hidden;">
+    <div style="text-align: center; font-size: 18px; font-weight: bold; color: #1a1a1a; margin-bottom: 15px;">
+        Modelo de Bates: Volatilidad Estocástica con Saltos
+    </div>
+    
+    <svg viewBox="0 0 900 560" width="100%" height="100%" style="display: block;">
+        <!-- GRÁFICO 1: PRECIO DEL ACTIVO -->
+        <g transform="translate(80, 20)">
+            <!-- Cuadrícula horizontal (Precio: 60 a 100) -->
+            <line x1="0" y1="0" x2="760" y2="0" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="0" y1="50" x2="760" y2="50" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="0" y1="100" x2="760" y2="100" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="0" y1="150" x2="760" y2="150" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="0" y1="200" x2="760" y2="200" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            
+            <!-- Cuadrícula vertical (Tiempo: 0.2 a 1.0) -->
+            <line x1="152" y1="0" x2="152" y2="220" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="304" y1="0" x2="304" y2="220" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="456" y1="0" x2="456" y2="220" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="608" y1="0" x2="608" y2="220" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="760" y1="0" x2="760" y2="220" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+
+            <!-- Saltos de Poisson (Crashes) -->
+            <line x1="258" y1="-10" x2="258" y2="220" stroke="#b03a2e" stroke-width="1.5" stroke-dasharray="5,4" />
+            <line x1="532" y1="-10" x2="532" y2="220" stroke="#b03a2e" stroke-width="1.5" stroke-dasharray="5,4" />
+
+            <!-- Bordes del recuadro -->
+            <rect x="0" y="0" width="760" height="220" fill="none" stroke="#000" stroke-width="1"/>
+
+            <!-- Etiquetas Eje Y -->
+            <text x="-12" y="5" text-anchor="end" font-size="12px" fill="#333">100</text>
+            <text x="-12" y="55" text-anchor="end" font-size="12px" fill="#333">90</text>
+            <text x="-12" y="105" text-anchor="end" font-size="12px" fill="#333">80</text>
+            <text x="-12" y="155" text-anchor="end" font-size="12px" fill="#333">70</text>
+            <text x="-12" y="205" text-anchor="end" font-size="12px" fill="#333">60</text>
+            <text x="-45" y="110" transform="rotate(-90, -45, 110)" text-anchor="middle" font-size="13px" font-weight="500" fill="#000">Precio del Activo (S_t)</text>
+
+            <!-- Línea de Tendencia del Precio -->
+            <path d="M 0,10 L 5,8 L 10,15 L 15,3 L 20,12 L 25,6 L 30,14 L 35,5 L 40,7 L 45,18 L 50,12 L 55,22 L 60,35 L 65,30 L 70,25 L 75,40 L 80,48 L 85,42 L 90,46 L 95,50 L 100,55 L 105,62 L 110,50 L 115,48 L 120,40 L 125,44 L 130,35 L 135,38 L 140,45 L 145,55 L 150,52 L 155,50 L 160,58 L 165,52 L 170,48 L 175,45 L 180,42 L 185,38 L 190,44 L 195,36 L 200,34 L 205,30 L 210,25 L 215,22 L 220,24 L 225,18 L 230,22 L 235,16 L 240,24 L 245,30 L 250,22 L 255,18 L 258,16 M 258,68 L 260,72 L 265,65 L 270,62 L 275,55 L 280,60 L 285,64 L 290,75 L 295,78 L 300,82 L 305,80 L 310,88 L 315,82 L 320,80 L 325,76 L 330,75 L 335,74 L 340,70 L 345,68 L 350,72 L 355,68 L 360,65 L 365,62 L 370,68 L 375,72 L 380,75 L 385,84 L 390,82 L 395,80 L 400,76 L 405,82 L 410,75 L 415,70 L 420,68 L 425,65 L 430,62 L 435,58 L 440,64 L 445,60 L 450,68 L 455,75 L 460,72 L 465,78 L 470,82 L 475,88 L 480,95 L 485,102 L 490,100 L 495,102 L 500,98 L 505,103 L 510,100 L 515,105 L 520,115 L 525,110 L 530,96 L 532,100 M 532,160 L 535,162 L 540,158 L 545,152 L 550,150 L 555,154 L 560,152 L 565,158 L 570,165 L 575,172 L 580,175 L 585,170 L 590,174 L 595,182 L 600,185 L 605,192 L 610,198 L 615,202 L 620,205 L 625,212 L 630,210 L 635,205 L 640,196 L 645,190 L 650,188 L 655,185 L 660,192 L 665,190 L 670,198 L 675,204 L 680,208 L 685,212 L 690,208 L 695,202 L 700,194 L 705,190 L 710,186 L 715,182 L 720,180 L 725,178 L 730,176 L 735,178 L 740,174 L 745,172 L 750,175 L 755,178 L 760,170" fill="none" stroke="#2471a3" stroke-width="2" />
+
+            <!-- Leyenda Superior -->
+            <g transform="translate(540, 10)">
+                <rect x="0" y="0" width="210" height="45" rx="3" fill="white" stroke="#ccc" stroke-width="0.5"/>
+                <line x1="10" y1="14" x2="35" y2="14" stroke="#2471a3" stroke-width="2" />
+                <text x="45" y="18" font-size="11px" fill="#333">Precio del Activo (S_t)</text>
+                <line x1="10" y1="30" x2="35" y2="30" stroke="#b03a2e" stroke-width="1.5" stroke-dasharray="5,4" />
+                <text x="45" y="34" font-size="11px" fill="#333">Saltos de Poisson (Crash)</text>
+            </g>
+        </g>
+
+        <!-- GRÁFICO 2: VARIANZA ESTOCÁSTICA -->
+        <g transform="translate(80, 265)">
+            <!-- Cuadrícula horizontal (Varianza: 0.00 a 0.10) -->
+            <line x1="0" y1="20" x2="760" y2="20" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="0" y1="120" x2="760" y2="120" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="0" y1="220" x2="760" y2="220" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+
+            <!-- Cuadrícula vertical -->
+            <line x1="152" y1="0" x2="152" y2="220" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="304" y1="0" x2="304" y2="220" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="456" y1="0" x2="456" y2="220" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="608" y1="0" x2="608" y2="220" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+            <line x1="760" y1="0" x2="760" y2="220" stroke="#eef0f2" stroke-width="1" stroke-dasharray="2,2" />
+
+            <!-- Bordes del recuadro -->
+            <rect x="0" y="0" width="760" height="220" fill="none" stroke="#000" stroke-width="1"/>
+
+            <!-- Etiquetas Eje Y -->
+            <text x="-12" y="24" text-anchor="end" font-size="12px" fill="#333">0.10</text>
+            <text x="-12" y="124" text-anchor="end" font-size="12px" fill="#333">0.05</text>
+            <text x="-12" y="224" text-anchor="end" font-size="12px" fill="#333">0.00</text>
+            <text x="-45" y="110" transform="rotate(-90, -45, 110)" text-anchor="middle" font-size="13px" font-weight="500" fill="#000">Varianza (V_t)</text>
+
+            <!-- Etiquetas Eje X (Tiempo) -->
+            <text x="0" y="240" text-anchor="middle" font-size="12px" fill="#333">0.0</text>
+            <text x="152" y="240" text-anchor="middle" font-size="12px" fill="#333">0.2</text>
+            <text x="304" y="240" text-anchor="middle" font-size="12px" fill="#333">0.4</text>
+            <text x="456" y="240" text-anchor="middle" font-size="12px" fill="#333">0.6</text>
+            <text x="608" y="240" text-anchor="middle" font-size="12px" fill="#333">0.8</text>
+            <text x="760" y="240" text-anchor="middle" font-size="12px" fill="#333">1.0</text>
+            <text x="380" y="265" text-anchor="middle" font-size="13px" font-weight="500" fill="#000">Tiempo (t en años)</text>
+
+            <!-- Línea de Tendencia de la Varianza -->
+            <path d="M 0,145 L 5,142 L 10,140 L 15,148 L 20,138 L 25,135 L 30,144 L 35,146 L 40,152 L 45,155 L 50,158 L 55,160 L 60,155 L 65,154 L 70,148 L 75,144 L 80,140 L 85,135 L 90,132 L 95,128 L 100,122 L 105,116 L 110,118 L 115,124 L 120,132 L 125,138 L 130,144 L 135,146 L 140,155 L 145,162 L 150,165 L 155,170 L 160,172 L 165,168 L 170,164 L 175,160 L 180,158 L 185,155 L 190,152 L 195,154 L 200,158 L 205,152 L 210,148 L 215,150 L 220,155 L 225,160 L 230,162 L 235,164 L 240,168 L 245,172 L 250,174 L 255,178 L 260,175 L 265,170 L 270,174 L 275,165 L 280,162 L 285,158 L 290,154 L 295,152 L 300,155 L 305,160 L 310,165 L 315,170 L 320,172 L 325,174 L 330,170 L 335,165 L 340,168 L 345,172 L 350,170 L 355,168 L 360,174 L 365,172 L 370,175 L 375,178 L 380,182 L 385,185 L 390,188 L 395,184 L 400,180 L 405,182 L 410,184 L 415,178 L 420,172 L 425,168 L 430,162 L 435,155 L 440,158 L 445,152 L 450,148 L 455,144 L 460,140 L 465,134 L 470,132 L 475,128 L 480,122 L 485,118 L 490,114 L 495,110 L 500,105 L 505,102 L 510,95 L 515,92 L 520,88 L 525,85 L 530,88 L 535,84 L 540,82 L 545,86 L 550,80 L 555,75 L 560,72 L 565,68 L 570,62 L 575,65 L 580,58 L 585,55 L 590,52 L 595,48 L 600,45 L 605,42 L 610,24 L 615,22 L 620,25 L 625,32 L 630,44 L 635,55 L 640,58 L 645,52 L 650,48 L 655,50 L 665,48 L 670,52 L 675,54 L 680,48 L 685,42 L 690,38 L 695,24 L 700,28 L 705,32 L 710,24 L 715,28 L 720,22 L 725,25 L 730,28 L 735,32 L 740,24 L 745,28 L 750,32 L 755,24 L 760,28" fill="none" stroke="#e67e22" stroke-width="2" />
+
+            <!-- NUEVA UBICACIÓN DE LA LEYENDA (Abajo a la derecha) -->
+            <g transform="translate(540, 175)">
+                <rect x="0" y="0" width="210" height="30" rx="3" fill="white" stroke="#ccc" stroke-width="0.5"/>
+                <line x1="10" y1="15" x2="35" y2="15" stroke="#e67e22" stroke-width="2" />
+                <text x="45" y="19" font-size="11px" fill="#333">Varianza Estocástica (V_t)</text>
+            </g>
+        </g>
+    </svg>
+</div>
+<!-- FIN GRÁFICO -->
+
+
+</section>
+
+<section class="card" id="resumen">
+  <h2>9. Resumen</h2>
+  <div class="tablewrap"><table class="tbl"><thead><tr><th>Evento / situación</th><th>Spot</th><th>Vol ATM</th><th>Inclinación (skew)</th><th>Por qué</th></tr></thead><tbody>
+    <tr><td><b>Crash / sorpresa bajista</b> (acciones)</td><td>⬇️</td><td>⬆️⬆️</td><td>⬆️ se empina el smirk bajista</td><td>pánico + demanda de puts; ρ &lt; 0</td></tr>
+    <tr><td><b>Rally de alivio</b> (acciones)</td><td>⬆️</td><td>⬇️⬇️</td><td>≈ en puntos (relativa a la vol, más marcada)</td><td>se disipa el miedo; la vol colapsa</td></tr>
+    <tr><td><b>Squeeze / spike</b> (commodity, acción en squeeze)</td><td>⬆️⬆️</td><td>⬆️</td><td>⬆️ en el lado alcista (calls caros)</td><td>miedo a seguir subiendo; ρ &gt; 0</td></tr>
+    <tr><td><b>Antes de un evento con fecha</b></td><td>=</td><td>⬆️ en los plazos que lo incluyen</td><td>la curva se deforma (joroba si el resultado es binario) y se inclina hacia el lado de la sorpresa esperada</td><td>la incertidumbre se concentra en un día</td></tr>
+    <tr><td><b>Después del evento</b> (<i>vol crush</i>)</td><td>cualquiera</td><td>⬇️⬇️</td><td>se aplana</td><td>se resolvió la incertidumbre</td></tr></tbody></table></div>
+  <!-- Contenedor principal del Takeaway/Warning Box -->
+<div style="width: 100%; box-sizing: border-box; background-color: #f8f9fa; border: 1px solid #e0e0e0; border-left: 5px solid #ffc107; padding: 20px; border-radius: 6px; margin-top: 25px; margin-bottom: 25px; display: flex; gap: 15px; align-items: flex-start;">
+  
+  <!-- Icono de Warning arriba a la izquierda -->
+  <div style="font-size: 1.5em; line-height: 1; user-select: none; margin-top: 2px;">⚠️</div>
+  
+  <!-- Contenido de la sección -->
+  <div style="flex: 1; font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    
+    <h3 style="margin-top: 0; margin-bottom: 12px; color: #333; font-size: 1.25em;">Ideas para llevarte</h3>
+    
+    <ol style="padding-left: 20px; margin-top: 0; margin-bottom: 16px;">
+      <li style="margin-bottom: 8px;">La sonrisa es <strong>la distribución de probabilidad</strong> que el mercado le asigna al precio, "traducida" a volatilidades.</li>
+      <li style="margin-bottom: 8px;">Su <strong>forma</strong> indica de qué lado está el miedo; su <strong>nivel</strong>, cuánta incertidumbre hay.</li>
+      <li style="margin-bottom: 8px;">Ante un evento no solo cambia el nivel: cambian <strong>nivel, inclinación y curvatura</strong>, y la relación entre spot y vol depende del tipo de activo.</li>
+      <li style="margin-bottom: 0;">Los eventos con fecha <strong>inflan</strong> los plazos que los contienen y después los <strong>desinflan</strong> (<em>vol crush</em>).</li>
+    </ol>
+    
+    <!-- Nota aclaratoria interna inferior -->
+    <p style="margin: 12px 0 0 0; font-size: 0.9em; color: #666; border-top: 1px solid #e0e0e0; padding-top: 10px; font-style: italic;">
+      Son modelos pedagógicos (Merton, Heston y evento binario) con parámetros ilustrativos, no una calibración a datos de mercado.
+    </p>
+    
+  </div>
+
+</div>
+
+  <h2>Cuadro comparativo de modelos</h2>
+  <p class="lead">Guía orientativa: la aplicación óptima depende de liquidez, calidad de la superficie, convención de mercado y producto específico.</p>
+  <div class="tablewrap"><table class="tbl"><thead><tr><th>Modelo</th><th>Ventajas</th><th>Limitaciones / contras</th><th>Aplicaciones típicas</th></tr></thead><tbody>
+  <tr><td><b>Dupire LV</b></td><td>Reproduce la superficie vanilla calibrada; implementación relativamente directa en PDE/Monte Carlo.</td><td>Muy sensible a ruido; dinámica futura de sonrisa puede ser poco realista.</td><td>Exóticas dependientes de trayectoria; autocallables y opciones con barreras, según mercado y modelo de riesgo.</td></tr>
+  <tr><td><b>Derman–Kani (árbol implícito)</b></td><td>Intuitivo y discreto; ajusta el árbol a precios vanilla y permite backward induction.</td><td>Estabilidad numérica y construcción del árbol; la dinámica implícita no siempre es realista.</td><td>Opciones americanas/exóticas en árboles y enseñanza de dinámicas consistentes con la sonrisa.</td></tr>
+  <tr><td><b>Heston SV</b></td><td>Factor aleatorio de volatilidad, reversión a la media y skew mediante correlación; ampliamente estudiado.</td><td>Calibración no trivial; puede no capturar saltos extremos ni toda la forma de la sonrisa.</td><td>Vanilla y exóticas de acciones/índices; también FX y commodities con parámetros adecuados.</td></tr>
+  <tr><td><b>SABR SV</b></td><td>Flexible para smile de forwards; parámetros interpretables y fórmulas aproximadas rápidas.</td><td>La aproximación puede fallar en extremos; β suele fijarse y la extrapolación exige cuidado.</td><td>Caps/floors y swaptions de tasas; opciones sobre futuros/forwards en mercados donde se usa SABR.</td></tr>
+  <tr><td><b>Merton Jump-Diffusion</b></td><td>Modela gaps y colas pesadas; interpretación clara de frecuencia y tamaño de saltos.</td><td>Volatilidad de difusión normalmente constante; puede quedarse corto en skew y dinámica temporal.</td><td>Opciones de acciones/índices, análisis de riesgo de gap y escenarios de anuncios.</td></tr>
+  <tr><td><b>Bates SV + saltos</b></td><td>Combina skew dinámico de Heston con saltos; puede ajustar mejor colas y eventos extremos.</td><td>Muchos parámetros, calibración costosa y posible sobreajuste; mayor complejidad de implementación.</td><td>Opciones de acciones/índices y productos sensibles a saltos/eventos; otros mercados si los datos justifican el modelo.</td></tr>
+  </tbody></table></div>
+  <p><b>Regla práctica:</b> para vanilla líquidas, primero importa calibrar bien y de forma estable; para exóticas, además importa que la dinámica del modelo sea creíble. Replicar hoy la sonrisa no garantiza predecir correctamente cómo evolucionará mañana.</p>
+</section>
+
+
+</main>
+<div class="wrap"><footer>Todo el cálculo (Black–Scholes, Merton, Heston, Dupire, árbol trinomial, SABR, Bates y gráficos) se hace en tu navegador. Las superficies 3D usan Plotly (CDN) si hay internet; sin conexión se usa un visor 3D propio. No necesita Python.</footer></div>
+
+<script>
+'use strict';
+/* ═══════════════════════════════════════════════════════════════════════════
+   Sonrisas de volatilidad — matemática, gráficos SVG e interfaz (JS puro)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+// ── Mercado de referencia ────────────────────────────────────────────────────
+const S0 = 100, RF = 0.03, DIV = 0.0, T0 = 0.25;
+const range = (a, b, s) => { const o = []; for (let v = a; v <= b + 1e-9; v += s) o.push(+v.toFixed(10)); return o; };
+const STRIKES = range(70, 130, 2);
+const COL = { antes: '#7f7f7f', baja: '#d62728', suba: '#2ca02c', azul: '#1f77b4', naranja: '#ff7f0e', violeta: '#9467bd' };
+
+// ── Matemática ───────────────────────────────────────────────────────────────
+// Normal acumulada (Graeme West, doble precisión)
+function cdf(x) {
+  const xa = Math.abs(x); let c;
+  if (xa > 37) c = 0;
+  else {
+    const e = Math.exp(-xa * xa / 2);
+    if (xa < 7.07106781186547) {
+      let b = 3.52624965998911e-02 * xa + 0.700383064443688;
+      b = b * xa + 6.37396220353165; b = b * xa + 33.912866078383; b = b * xa + 112.079291497871;
+      b = b * xa + 221.213596169931; b = b * xa + 220.206867912376;
+      c = e * b;
+      let d = 8.83883476483184e-02 * xa + 1.75566716318264;
+      d = d * xa + 16.064177579207; d = d * xa + 86.7807322029461; d = d * xa + 296.564248779674;
+      d = d * xa + 637.333633378831; d = d * xa + 793.826512519948; d = d * xa + 440.413735824752;
+      c = c / d;
+    } else {
+      let b = xa + 0.65; b = xa + 4 / b; b = xa + 3 / b; b = xa + 2 / b; b = xa + 1 / b;
+      c = e / b / 2.506628274631;
+    }
+  }
+  return x > 0 ? 1 - c : c;
+}
+const fwd = (S, T) => S * Math.exp((RF - DIV) * T);
+
+// Black-76. w = varianza total, cp = +1 call / -1 put
+function black(F, K, w, df, cp) {
+  const sw = Math.sqrt(w), d1 = (Math.log(F / K) + 0.5 * w) / sw, d2 = d1 - sw;
+  return df * cp * (F * cdf(cp * d1) - K * cdf(cp * d2));
+}
+const bsCall = (S, Ks, T, sigma) => Ks.map(K => black(fwd(S, T), K, sigma * sigma * T, Math.exp(-RF * T), 1));
+
+// Vol implícita a partir de precios de call (usa la opción OTM, más estable)
+function impliedVol(prices, S, Ks, T) {
+  const F = fwd(S, T), df = Math.exp(-RF * T);
+  return Ks.map((k, i) => {
+    const cp = k >= F ? 1 : -1;
+    const target = cp === 1 ? prices[i] : prices[i] - df * (F - k);
+    if (!isFinite(target) || target < 1e-9) return NaN;
+    const f = s => black(F, k, s * s * T, df, cp) - target;
+    let lo = 1e-4, hi = 5;
+    if (f(lo) > 0 || f(hi) < 0) return NaN;
+    for (let it = 0; it < 60; it++) { const mid = 0.5 * (lo + hi); if (f(mid) > 0) hi = mid; else lo = mid; }
+    return 0.5 * (lo + hi);
+  });
+}
+
+// Merton (1976): difusión + saltos lognormales
+function mertonCall(S, Ks, T, p) {
+  const { sigma, lam, muJ, sigJ } = p;
+  const m = Math.exp(muJ + 0.5 * sigJ * sigJ) - 1, lm = Math.log1p(m), df = Math.exp(-RF * T);
+  const out = new Array(Ks.length).fill(0);
+  let pn = Math.exp(-lam * T);
+  for (let n = 0; n < 80; n++) {
+    if (n > 0) pn *= lam * T / n;
+    if (pn < 1e-15 && n > lam * T) break;
+    const Fn = S * Math.exp((RF - DIV - lam * m) * T + n * lm);
+    const w = sigma * sigma * T + n * sigJ * sigJ;
+    for (let i = 0; i < Ks.length; i++) out[i] += pn * black(Fn, Ks[i], w, df, 1);
+  }
+  return out;
+}
+
+// Heston (1993) con la fórmula de Lewis. p = {v0, kappa, theta, xi, rho}
+function hestonCall(S, Ks, T, p) {
+  const F = fwd(S, T), df = Math.exp(-RF * T);
+  const xi = Math.max(p.xi, 1e-3), { kappa, theta, rho, v0 } = p;
+  const U = 200, n = 2000, du = U / n, nK = Ks.length;
+  const ks = Ks.map(K => Math.log(F / K));
+  const integ = new Float64Array(nK);
+  const k1 = kappa * theta / (xi * xi), xi2 = xi * xi;
+  for (let j = 0; j <= n; j++) {
+    const u = j * du, q = u * u + 0.25;
+    // beta = kappa - rho*xi*i*(u - 0.5i)
+    const br = kappa - 0.5 * rho * xi, bi = -rho * xi * u;
+    // d = sqrt(beta^2 + xi^2 (u^2+1/4))
+    const d2r = br * br - bi * bi + xi2 * q, d2i = 2 * br * bi;
+    const mod = Math.hypot(d2r, d2i);
+    let dr = Math.sqrt(0.5 * (mod + d2r)), di = Math.sqrt(Math.max(0, 0.5 * (mod - d2r)));
+    if (d2i < 0) di = -di;
+    // g = (beta-d)/(beta+d)
+    const nr = br - dr, ni = bi - di, sr = br + dr, si = bi + di, sd = sr * sr + si * si;
+    const gr = (nr * sr + ni * si) / sd, gi = (ni * sr - nr * si) / sd;
+    // e = exp(-d T)
+    const em = Math.exp(-dr * T), er = em * Math.cos(di * T), ei = -em * Math.sin(di * T);
+    // ge = g*e ; (1-ge)/(1-g)
+    const ger = gr * er - gi * ei, gei = gr * ei + gi * er;
+    const ar = 1 - ger, ai = -gei, cr = 1 - gr, ci = -gi, cd = cr * cr + ci * ci;
+    const qr = (ar * cr + ai * ci) / cd, qi = (ai * cr - ar * ci) / cd;
+    const lr = Math.log(Math.hypot(qr, qi)), li = Math.atan2(qi, qr);       // log principal
+    // C = k1*((beta-d)T - 2 log(.)) ; D = (beta-d)/xi^2 * (1-e)/(1-ge)
+    const Cr = k1 * (nr * T - 2 * lr), Ci = k1 * (ni * T - 2 * li);
+    const er1 = 1 - er, ei1 = -ei;
+    const fr = (er1 * ar + ei1 * ai) / (ar * ar + ai * ai), fi = (ei1 * ar - er1 * ai) / (ar * ar + ai * ai);
+    const Dr = (nr * fr - ni * fi) / xi2, Di = (nr * fi + ni * fr) / xi2;
+    let expo = Cr + Dr * v0, ang = Ci + Di * v0;
+    // Bates (1996): multiplica la función característica de Heston por la de
+    // saltos de Poisson compuestos, incluyendo la compensación neutral al riesgo.
+    if (p.lam > 0) {
+      const muJ = p.muJ || 0, sigJ = Math.max(p.sigJ || 0, 1e-8);
+      const kJ = Math.exp(muJ + 0.5 * sigJ * sigJ) - 1;
+      const magJ = Math.exp(0.5 * muJ - 0.5 * sigJ * sigJ * (u * u - 0.25));
+      const angJ = u * muJ + 0.5 * sigJ * sigJ * u;
+      const jRe = magJ * Math.cos(angJ), jIm = magJ * Math.sin(angJ);
+      expo += p.lam * T * (jRe - 1 - 0.5 * kJ);
+      ang += p.lam * T * (jIm - u * kJ);
+    }
+    const pm = Math.exp(expo);
+    const phr = pm * Math.cos(ang), phi = pm * Math.sin(ang), wgt = (j === 0 || j === n) ? 0.5 : 1;
+    for (let i = 0; i < nK; i++) {
+      const a = u * ks[i];
+      integ[i] += wgt * (Math.cos(a) * phr - Math.sin(a) * phi) / q * du;
+    }
+  }
+  return Ks.map((K, i) => df * (F - Math.sqrt(F * K) / Math.PI * integ[i]));
+}
+
+// Bates: Heston con saltos (los parámetros de salto se pasan en p).
+function batesCall(S, Ks, T, p) { return hestonCall(S, Ks, T, p); }
+
+// SABR: volatilidad Black implícita aproximada de Hagan (normalizada en unidades decimales).
+function sabrImpliedVol(F, K, T, p) {
+  const alpha = Math.max(p.alpha, 1e-5), beta = Math.max(0, Math.min(1, p.beta));
+  const rho = Math.max(-0.999, Math.min(0.999, p.rho)), nu = Math.max(p.nu, 1e-5);
+  const logFK = Math.log(F / K), oneMinus = 1 - beta;
+  const fk = Math.pow(F * K, oneMinus / 2);
+  const log2 = logFK * logFK, log4 = log2 * log2;
+  const denom = fk * (1 + oneMinus * oneMinus * log2 / 24 + Math.pow(oneMinus, 4) * log4 / 1920);
+  const z = (nu / alpha) * fk * logFK;
+  let zx = 1;
+  if (Math.abs(z) > 1e-7) {
+    const rad = Math.sqrt(Math.max(1e-14, 1 - 2 * rho * z + z * z));
+    const xz = Math.log(Math.max(1e-14, (rad + z - rho) / (1 - rho)));
+    zx = z / (Math.abs(xz) < 1e-10 ? 1 : xz);
+  }
+  const correction = 1 + (oneMinus * oneMinus * alpha * alpha / (24 * Math.pow(F * K, oneMinus))
+    + rho * beta * nu * alpha / (4 * fk)
+    + (2 - 3 * rho * rho) * nu * nu / 24) * T;
+  const vol = alpha / Math.max(denom, 1e-12) * zx * correction;
+  return Math.max(0.005, Math.min(3.0, vol));
+}
+
+// Superficie implícita sintética para experimentar con Dupire y el árbol.
+// skew = d(sigma)/d(log-moneyness); conv = coeficiente cuadrático.
+function marketSurfaceVol(K, T, p) {
+  const lm = Math.log(K / fwd(S0, T));
+  return Math.max(0.04, Math.min(1.2, p.atm / 100 + p.skew * lm + p.conv * lm * lm + p.term * Math.sqrt(Math.max(T, 0))));
+}
+function marketSurfaceCall(K, T, p) {
+  const vol = marketSurfaceVol(K, T, p), F = fwd(S0, T);
+  return black(F, K, vol * vol * T, Math.exp(-RF * T), 1);
+}
+// Fórmula de Dupire con diferencias finitas. Se estabiliza la varianza local
+// para evitar explosiones numéricas en alas con muy poca convexidad.
+function dupireLocalVol(K, T, p) {
+  const h = 0.75, dt = Math.min(0.004, T * 0.08), c = marketSurfaceCall(K, T, p);
+  const cT = (marketSurfaceCall(K, T + dt, p) - marketSurfaceCall(K, T - dt, p)) / (2 * dt);
+  const ckp = marketSurfaceCall(K + h, T, p), ckm = marketSurfaceCall(K - h, T, p);
+  const cK = (ckp - ckm) / (2 * h), cKK = (ckp - 2 * c + ckm) / (h * h);
+  const den = 0.5 * K * K * cKK;
+  const num = cT + (RF - DIV) * K * cK + DIV * c;
+  if (!(den > 1e-9) || !isFinite(num)) return NaN;
+  const variance = num / den;
+  if (!(variance > 0) || !isFinite(variance)) return NaN;
+  return Math.sqrt(Math.max(0.0025, Math.min(1.0, variance)));
+}
+function buildDupireSurface(v, Kgrid, Tgrid) {
+  const p = { atm: v.atm, skew: v.skew, conv: v.conv, term: (v.term || 0) / 100 };
+  const Ks = Kgrid || range(75, 125, 2), Ts = Tgrid || range(1, 12, 1).map(m => m / 12);
+  return { p, Ks, Ts, z: Ts.map(T => Ks.map(K => dupireLocalVol(K, T, p) * 100)) };
+}
+
+// Evento binario con fecha: el precio salta +a o -b (log) el día tEv. Sin arbitraje.
+function eventoCall(S, Ks, T, sigma, tEv, a, b) {
+  const F = fwd(S, T), df = Math.exp(-RF * T), w = sigma * sigma * T;
+  if (T <= tEv) return Ks.map(K => black(F, K, w, df, 1));
+  const p = (1 - Math.exp(-b)) / (Math.exp(a) - Math.exp(-b));
+  return Ks.map(K => p * black(F * Math.exp(a), K, w, df, 1) + (1 - p) * black(F * Math.exp(-b), K, w, df, 1));
+}
+
+// ATM (forward), skew = vol(90%) - vol(110%), convexidad = promedio de puntas - ATM
+function resumenSmile(priceFn, S, T) {
+  const Kq = [0.9 * S, fwd(S, T), 1.1 * S];
+  const iv = impliedVol(priceFn(Kq), S, Kq, T);
+  return { atm: iv[1], skew: iv[0] - iv[2], conv: 0.5 * (iv[0] + iv[2]) - iv[1] };
+}
+
+// Shock de spot + reacción de la vol (con "pánico" en el escenario adverso)
+function eventoHeston(shock, params, beta, persist, panico, T, Ks) {
+  T = T === undefined ? T0 : T; Ks = Ks || STRIKES;
+  const S1 = S0 * (1 + shock);
+  const sig1 = Math.max(Math.sqrt(params.v0) - beta * shock, 0.06), v1 = sig1 * sig1;
+  const th1 = params.theta + persist * (v1 - params.theta);
+  const estres = Math.max(0, -Math.sign(beta) * shock);
+  const p = Object.assign({}, params, { v0: v1, theta: th1, xi: params.xi * (1 + panico * 4 * estres) });
+  const pr = K => hestonCall(S1, K, T, p);
+  return { S1, iv: impliedVol(pr(Ks), S1, Ks, T).map(x => x * 100), res: resumenSmile(pr, S1, T) };
+}
+
+// ── Formato ──────────────────────────────────────────────────────────────────
+const pct = (x, d = 1) => (x * 100).toFixed(d) + '%';
+const pctS = (x, d = 0) => (x >= 0 ? '+' : '') + (x * 100).toFixed(d) + '%';
+const pts = x => (x >= 0 ? '+' : '') + (x * 100).toFixed(1);
+const etiquetaTipo = s => s > 0.01 ? 'Smirk bajista (tipo acciones): puts caros'
+  : s < -0.01 ? 'Smirk alcista (tipo commodities / squeeze): calls caros' : 'Sonrisa simétrica (tipo FX): ambas puntas caras';
+
+// ── Gráficos SVG ─────────────────────────────────────────────────────────────
+let CHART_ID = 0;
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function niceTicks(min, max, n) {
+  n = n || 6;
+  const step0 = (max - min) / n, mag = Math.pow(10, Math.floor(Math.log10(step0))), nm = step0 / mag;
+  const step = (nm < 1.5 ? 1 : nm < 3 ? 2 : nm < 7 ? 5 : 10) * mag, t = [];
+  for (let v = Math.ceil(min / step - 1e-9) * step; v <= max + 1e-9; v += step) t.push(+v.toFixed(10));
+  return t;
+}
+const fmtTick = v => (Math.abs(v) >= 1000 ? v.toFixed(0) : (+v.toFixed(3)).toString());
+
+function frame(spec, W, H, m) {
+  // Rango de datos y escalas
+  let xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
+  spec.series.forEach(s => {
+    s.x.forEach(v => { if (isFinite(v)) { xmin = Math.min(xmin, v); xmax = Math.max(xmax, v); } });
+    s.y.forEach(v => { if (isFinite(v)) { ymin = Math.min(ymin, v); ymax = Math.max(ymax, v); } });
+  });
+  if (spec.xmin != null) xmin = spec.xmin; if (spec.xmax != null) xmax = spec.xmax;
+  if (spec.ymin != null) ymin = spec.ymin; if (spec.ymax != null) ymax = spec.ymax;
+  if (spec.yStep && spec.ymin == null) ymin = Math.floor(ymin / spec.yStep) * spec.yStep;
+  if (spec.yStep && spec.ymax == null) ymax = Math.ceil(ymax / spec.yStep) * spec.yStep;
+  if (!spec.yStep) { const pad = (ymax - ymin) * 0.06 || 1; if (spec.ymin == null) ymin -= pad; if (spec.ymax == null) ymax += pad; }
+  if (!(ymax > ymin)) ymax = ymin + 1;
+  if (!(xmax > xmin)) xmax = xmin + 1;
+  return { xmin, xmax, ymin, ymax, W, H, m, pw: W - m.l - m.r, ph: H - m.t - m.b };
+}
+
+function axesSVG(g, spec) {
+  const { m, pw, ph, W, H } = g;
+  const sx = v => m.l + (v - g.xmin) / (g.xmax - g.xmin) * pw, sy = v => m.t + ph - (v - g.ymin) / (g.ymax - g.ymin) * ph;
+  let o = '';
+  niceTicks(g.ymin, g.ymax, 6).forEach(t => {
+    o += `<line class="grid" x1="${m.l}" x2="${m.l + pw}" y1="${sy(t).toFixed(1)}" y2="${sy(t).toFixed(1)}"/>` +
+         `<text class="tick" x="${m.l - 8}" y="${(sy(t) + 4).toFixed(1)}" text-anchor="end">${fmtTick(t)}</text>`;
+  });
+  niceTicks(g.xmin, g.xmax, 7).forEach(t => {
+    o += `<line class="grid" x1="${sx(t).toFixed(1)}" x2="${sx(t).toFixed(1)}" y1="${m.t}" y2="${m.t + ph}"/>` +
+         `<text class="tick" x="${sx(t).toFixed(1)}" y="${m.t + ph + 18}" text-anchor="middle">${fmtTick(t)}</text>`;
+  });
+  o += `<line class="axis" x1="${m.l}" x2="${m.l + pw}" y1="${m.t + ph}" y2="${m.t + ph}"/><line class="axis" x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${m.t + ph}"/>`;
+  if (spec.xLabel) o += `<text class="alabel" x="${m.l + pw / 2}" y="${H - 6}" text-anchor="middle">${esc(spec.xLabel)}</text>`;
+  if (spec.yLabel) o += `<text class="alabel" transform="translate(14 ${m.t + ph / 2}) rotate(-90)" text-anchor="middle">${esc(spec.yLabel)}</text>`;
+  return { o, sx, sy };
+}
+
+function lineChart(spec) {
+  const id = 'c' + (++CHART_ID), W = spec.width || 640, H = spec.height || 380, m = { l: 58, r: 18, t: 40, b: 46 };
+  // leyenda: posiciones (con salto de línea si no entra)
+  const leg = []; let lx = m.l, row = 0;
+  spec.series.filter(s => s.name).forEach(s => {
+    const wItem = 25 + s.name.length * 6.6 + 18;
+    if (lx + wItem > W - 8 && lx > m.l) { lx = m.l; row++; }
+    leg.push({ s, x: lx, row }); lx += wItem;
+  });
+  m.t = 26 + (row + 1) * 16;
+  const g = frame(spec, W, H, m), ax = axesSVG(g, spec), { sx, sy } = ax;
+  let o = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img"><defs><clipPath id="${id}"><rect x="${m.l}" y="${m.t - 4}" width="${g.pw}" height="${g.ph + 8}"/></clipPath></defs>` + ax.o;
+  o += `<g clip-path="url(#${id})">`;
+  (spec.vlines || []).forEach(v => {
+    o += `<line x1="${sx(v.x).toFixed(1)}" x2="${sx(v.x).toFixed(1)}" y1="${m.t}" y2="${m.t + g.ph}" stroke="${v.color || COL.antes}" stroke-width="1.6" stroke-dasharray="${v.dash || '3 4'}"/>`;
+    if (v.label) o += `<text class="vlab" x="${(sx(v.x) + 5).toFixed(1)}" y="${m.t + 12}" fill="${v.color || COL.antes}">${esc(v.label)}</text>`;
+  });
+  spec.series.forEach(s => {
+    // segmentos continuos (se corta en NaN)
+    let d = '', pen = false, first = null, last = null, area = '';
+    s.x.forEach((xv, i) => {
+      const yv = s.y[i];
+      if (!isFinite(yv) || !isFinite(xv)) { pen = false; return; }
+      const X = sx(xv).toFixed(1), Y = sy(yv).toFixed(1);
+      d += (pen ? 'L' : 'M') + X + ' ' + Y; pen = true;
+      if (first === null) first = X; last = X;
+    });
+    if (s.area && first !== null) o += `<path d="${d}L${last} ${sy(g.ymin).toFixed(1)}L${first} ${sy(g.ymin).toFixed(1)}Z" fill="${s.color}" opacity="0.16"/>`;
+    o += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.width || 2.8}" stroke-linejoin="round" stroke-linecap="round"${s.dash ? ` stroke-dasharray="${s.dash}"` : ''}/>`;
+    if (s.markers) s.x.forEach((xv, i) => { if (isFinite(s.y[i])) o += `<circle cx="${sx(xv).toFixed(1)}" cy="${sy(s.y[i]).toFixed(1)}" r="2.6" fill="${s.color}"/>`; });
+  });
+  (spec.points || []).forEach(p => { o += `<path d="M${sx(p.x).toFixed(1)} ${(sy(p.y) - 8).toFixed(1)}l7 8l-7 8l-7 -8z" fill="${p.color}" stroke="#fff" stroke-width="1.5"/>`; });
+  o += '</g>';
+  // leyenda
+  leg.forEach(({ s, x, row }) => {
+    const yy = 14 + row * 16;
+    o += `<line x1="${x}" x2="${x + 20}" y1="${yy}" y2="${yy}" stroke="${s.color}" stroke-width="3" ${s.dash ? `stroke-dasharray="${s.dash}"` : ''}/><text class="legend" x="${x + 25}" y="${yy + 4}">${esc(s.name)}</text>`;
+  });
+  o += `<line class="xh" x1="0" x2="0" y1="${m.t}" y2="${m.t + g.ph}" style="display:none"/></svg>`;
+  return { svg: o, geom: g };
+}
+
+// Mapa de calor (superficie de vol): z[fila][col], x = columnas, y = filas
+const SCALE = ['#440154', '#3b528b', '#21908d', '#5dc863', '#fde725'];
+function lerpColor(t) {
+  t = Math.max(0, Math.min(1, t)) * (SCALE.length - 1);
+  const i = Math.min(SCALE.length - 2, Math.floor(t)), f = t - i, h = c => [1, 3, 5].map(k => parseInt(c.substr(k, 2), 16));
+  const a = h(SCALE[i]), b = h(SCALE[i + 1]);
+  return 'rgb(' + a.map((v, k) => Math.round(v + (b[k] - v) * f)).join(',') + ')';
+}
+function heatChart(spec) {
+  const W = spec.width || 640, H = spec.height || 380, m = { l: 62, r: 78, t: 18, b: 46 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b, nx = spec.x.length, ny = spec.y.length;
+  const flat = [].concat.apply([], spec.z).filter(isFinite);
+  const zmin = Math.floor(Math.min.apply(null, flat)), zmax = Math.ceil(Math.max.apply(null, flat));
+  const cw = pw / nx, ch = ph / ny;
+  let o = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img">`;
+  spec.z.forEach((row, j) => row.forEach((val, i) => {
+    o += `<rect x="${(m.l + i * cw).toFixed(1)}" y="${(m.t + ph - (j + 1) * ch).toFixed(1)}" width="${(cw + 0.6).toFixed(1)}" height="${(ch + 0.6).toFixed(1)}" fill="${isFinite(val) ? lerpColor((val - zmin) / (zmax - zmin || 1)) : '#eee'}"/>`;
+  }));
+  for (let i = 0; i < nx; i += Math.ceil(nx / 7)) o += `<text class="tick" x="${(m.l + (i + 0.5) * cw).toFixed(1)}" y="${m.t + ph + 18}" text-anchor="middle">${fmtTick(spec.x[i])}</text>`;
+  spec.y.forEach((yv, j) => { o += `<text class="tick" x="${m.l - 8}" y="${(m.t + ph - (j + 0.5) * ch + 4).toFixed(1)}" text-anchor="end">${fmtTick(yv)}</text>`; });
+  o += `<text class="alabel" x="${m.l + pw / 2}" y="${H - 6}" text-anchor="middle">${esc(spec.xLabel || '')}</text><text class="alabel" transform="translate(14 ${m.t + ph / 2}) rotate(-90)" text-anchor="middle">${esc(spec.yLabel || '')}</text>`;
+  // barra de color
+  const bx = W - m.r + 22, bh = ph;
+  for (let k = 0; k < 40; k++) o += `<rect x="${bx}" y="${(m.t + bh - (k + 1) * bh / 40).toFixed(1)}" width="14" height="${(bh / 40 + 0.6).toFixed(1)}" fill="${lerpColor(k / 39)}"/>`;
+  niceTicks(zmin, zmax, 5).forEach(t => { o += `<text class="tick" x="${bx + 20}" y="${(m.t + bh - (t - zmin) / (zmax - zmin || 1) * bh + 4).toFixed(1)}">${fmtTick(t)}%</text>`; });
+  o += '</svg>';
+  return { svg: o, geom: { W, H, m, pw, ph, nx, ny } };
+}
+
+// Superficie 3D interactiva sin dependencias externas: rotar con arrastre,
+// zoom con la rueda y consultar nodos pasando el cursor.
+function surface3dChart(spec) {
+  const id = 'surface3d-' + (++CHART_ID);
+  return { svg: `<canvas id="${id}" class="surface3d-canvas" aria-label="Superficie tridimensional interactiva de volatilidad"></canvas>`, geom: { id } };
+}
+// Plotly (si hay conexión): superficie 3D con rotación, zoom y hover nativos, igual que superficie_dupire.html
+function renderPlotly(body, spec) {
+  let host = body.querySelector('.plotly-host');
+  if (!host) { body.innerHTML = ''; host = document.createElement('div'); host.className = 'plotly-host'; body.appendChild(host); }
+  const z = spec.z.map(r => r.map(v => Number.isFinite(v) ? v : null));
+  const data = [{ type: 'surface', x: spec.x, y: spec.y, z, colorscale: 'Viridis', connectgaps: false,
+    colorbar: { title: { text: 'Vol (%)', side: 'top' }, thickness: 14, len: 0.8 },
+    hovertemplate: 'Strike %{x}<br>Vencimiento %{y} m<br>Vol %{z:.2f}%<extra></extra>' }];
+  const layout = { autosize: true, margin: { l: 0, r: 0, b: 0, t: 0 }, uirevision: 'keep', paper_bgcolor: '#fff',
+    scene: { aspectratio: { x: 1, y: 1, z: 0.55 }, camera: { eye: { x: 1.5, y: 1.5, z: 1.1 } },
+      xaxis: { title: { text: spec.xLabel || 'Strike (K)' }, gridcolor: '#e2e8f0' },
+      yaxis: { title: { text: spec.yLabel || 'Vencimiento (meses)' }, gridcolor: '#e2e8f0' },
+      zaxis: { title: { text: spec.zLabel || 'Vol (%)' }, gridcolor: '#e2e8f0' } } };
+  return Plotly.react(host, data, layout, { responsive: true, displaylogo: false }).then(() => Plotly.Plots.resize(host));
+}
+
+// Respaldo sin internet: visor 3D propio con auto-encuadre (la superficie siempre entra completa en el lienzo).
+function attachSurface3d(div, spec) {
+  const canvas = div.querySelector('canvas.surface3d-canvas'); if (!canvas) return;
+  const tip = document.createElement('div'); tip.className = 'tip'; tip.style.display = 'none'; div.appendChild(tip);
+  const chartEl = div.closest ? div.closest('.chart') : null;
+  const fsMode = !!(chartEl && chartEl.classList.contains('is-fs'));
+  const W = Math.max(320, Math.floor(canvas.getBoundingClientRect().width || div.clientWidth || 600));
+  const H = fsMode ? Math.max(320, Math.floor(div.clientHeight || 600)) : 440, dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const nx = spec.x.length, ny = spec.y.length, midJ = Math.floor((ny - 1) / 2), midI = Math.floor((nx - 1) / 2);
+  const flat = spec.z.reduce((a, r) => a.concat(r), []).filter(Number.isFinite);
+  const zmin = Math.min(...flat), zmax = Math.max(...flat), zrange = zmax - zmin || 1;
+  let yaw = -0.68, pitch = 0.72, zoom = 1, dragging = false, last = null, vertices = [];
+  const xmid = (spec.x[0] + spec.x[nx - 1]) / 2, xrange = spec.x[nx - 1] - spec.x[0] || 1;
+  const ymid = (spec.y[0] + spec.y[ny - 1]) / 2, yrange = spec.y[ny - 1] - spec.y[0] || 1;
+  // Proyección "cruda" (sin escala ni desplazamiento); luego se encuadra según la caja que ocupa.
+  function raw(i, j, zval) {
+    const x = ((spec.x[i] - xmid) / xrange) * 2.35;
+    const y = ((spec.y[j] - ymid) / yrange) * 1.7;
+    const z = ((zval - zmin) / zrange) * 1.35;
+    const xr = x * Math.cos(yaw) - y * Math.sin(yaw);
+    const yr = x * Math.sin(yaw) + y * Math.cos(yaw);
+    const ys = yr * Math.cos(pitch) - z * Math.sin(pitch);
+    const depth = yr * Math.sin(pitch) + z * Math.cos(pitch);
+    return { rx: xr, ry: -ys, depth };
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+    const rawV = spec.z.map((row, j) => row.map((z, i) => raw(i, j, Number.isFinite(z) ? z : zmin)));
+    const corners = [raw(0, 0, zmin), raw(nx - 1, 0, zmin), raw(nx - 1, ny - 1, zmin), raw(0, ny - 1, zmin)];
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    rawV.forEach(r => r.forEach(p => { x0 = Math.min(x0, p.rx); x1 = Math.max(x1, p.rx); y0 = Math.min(y0, p.ry); y1 = Math.max(y1, p.ry); }));
+    corners.forEach(p => { x0 = Math.min(x0, p.rx); x1 = Math.max(x1, p.rx); y0 = Math.min(y0, p.ry); y1 = Math.max(y1, p.ry); });
+    const padL = 28, padR = 84, padT = 44, padB = 40, availW = W - padL - padR, availH = H - padT - padB;
+    const sc = Math.min(availW / ((x1 - x0) || 1), availH / ((y1 - y0) || 1)) * zoom;
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, ox = padL + availW / 2, oy = padT + availH / 2;
+    const toScreen = r => ({ x: ox + (r.rx - cx) * sc, y: oy + (r.ry - cy) * sc, depth: r.depth });
+    vertices = rawV.map(row => row.map(toScreen));
+    const faces = [];
+    for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
+      const points = [vertices[j][i], vertices[j][i + 1], vertices[j + 1][i + 1], vertices[j + 1][i]];
+      const vals = [spec.z[j][i], spec.z[j][i + 1], spec.z[j + 1][i + 1], spec.z[j + 1][i]];
+      if (!vals.every(Number.isFinite)) continue;
+      faces.push({ pts: [points[0], points[1], points[2]], value: (vals[0] + vals[1] + vals[2]) / 3, depth: (points[0].depth + points[1].depth + points[2].depth) / 3 });
+      faces.push({ pts: [points[0], points[2], points[3]], value: (vals[0] + vals[2] + vals[3]) / 3, depth: (points[0].depth + points[2].depth + points[3].depth) / 3 });
+    }
+    faces.sort((a, b) => a.depth - b.depth);
+    faces.forEach(f => {
+      ctx.beginPath(); ctx.moveTo(f.pts[0].x, f.pts[0].y); ctx.lineTo(f.pts[1].x, f.pts[1].y); ctx.lineTo(f.pts[2].x, f.pts[2].y); ctx.closePath();
+      ctx.fillStyle = lerpColor((f.value - zmin) / zrange); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.37)'; ctx.lineWidth = 0.7; ctx.stroke();
+    });
+    const axisLine = (a, b) => { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.strokeStyle = '#526174'; ctx.lineWidth = 1.25; ctx.stroke(); };
+    const p0 = toScreen(raw(0, midJ, zmin)), p1 = toScreen(raw(nx - 1, midJ, zmin));
+    const q0 = toScreen(raw(midI, 0, zmin)), q1 = toScreen(raw(midI, ny - 1, zmin));
+    axisLine(p0, p1); axisLine(q0, q1);
+    ctx.fillStyle = '#334155'; ctx.font = '12px system-ui, sans-serif';
+    const clampX = (v, w) => Math.max(4, Math.min(W - w, v)), clampY = v => Math.max(16, Math.min(H - 8, v));
+    ctx.fillText('Strike (K)', clampX(p1.x + 6, 90), clampY(p1.y + 15));
+    ctx.fillText('Vencimiento', clampX(q1.x - 30, 90), clampY(q1.y + 16));
+    ctx.fillText('Vol. implícita (%)', 12, 22);
+    ctx.fillStyle = '#64748b'; ctx.font = '11px system-ui, sans-serif';
+    ctx.fillText('Arrastrá para rotar · rueda para zoom · doble clic para restablecer', 12, H - 10);
+    const bx = W - 28, by = 38, bh = 122;
+    for (let k = 0; k < 45; k++) { ctx.fillStyle = lerpColor(k / 44); ctx.fillRect(bx, by + bh - (k + 1) * bh / 45, 10, bh / 45 + 0.5); }
+    ctx.fillStyle = '#475569'; ctx.font = '10px system-ui, sans-serif'; ctx.fillText(zmax.toFixed(1) + '%', bx - 27, by - 4); ctx.fillText(zmin.toFixed(1) + '%', bx - 27, by + bh + 10);
+  }
+  draw();
+  canvas.addEventListener('pointerdown', ev => { dragging = true; last = { x: ev.clientX, y: ev.clientY }; canvas.setPointerCapture(ev.pointerId); tip.style.display = 'none'; });
+  canvas.addEventListener('pointerup', () => { dragging = false; });
+  canvas.addEventListener('pointercancel', () => { dragging = false; });
+  canvas.addEventListener('dblclick', () => { yaw = -0.68; pitch = 0.72; zoom = 1; draw(); });
+  canvas.addEventListener('pointermove', ev => {
+    if (dragging && last) { yaw += (ev.clientX - last.x) * 0.008; pitch = Math.max(-0.2, Math.min(1.35, pitch + (ev.clientY - last.y) * 0.006)); last = { x: ev.clientX, y: ev.clientY }; draw(); return; }
+    const r = canvas.getBoundingClientRect(), px = ev.clientX - r.left, py = ev.clientY - r.top;
+    let best = null, bd = Infinity;
+    vertices.forEach((row, j) => row.forEach((pt, i) => { const d = Math.hypot(pt.x - px, pt.y - py); if (d < bd) { bd = d; best = { pt, i, j, z: spec.z[j][i] }; } }));
+    if (best && bd < 26 && Number.isFinite(best.z)) {
+      tip.innerHTML = `<b>Strike ${spec.x[best.i]}</b><br>Vencimiento: ${spec.y[best.j]} m<br>Volatilidad: <b>${best.z.toFixed(2)}%</b>`;
+      tip.style.display = 'block'; const dr = div.getBoundingClientRect(); tip.style.left = Math.min(ev.clientX - dr.left + 12, div.clientWidth - tip.offsetWidth - 6) + 'px'; tip.style.top = Math.max(8, ev.clientY - dr.top + 10) + 'px';
+    } else tip.style.display = 'none';
+  });
+  canvas.addEventListener('pointerleave', () => { if (!dragging) tip.style.display = 'none'; });
+  canvas.addEventListener('wheel', ev => { ev.preventDefault(); zoom = Math.max(0.65, Math.min(1.8, zoom * (ev.deltaY < 0 ? 1.08 : 0.92))); draw(); }, { passive: false });
+}
+
+function treeChart(spec) {
+  const W = spec.width || 900, H = spec.height || 380, N = spec.levels.length - 1;
+  const m = { l: 35, r: 20, t: 28, b: 38 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const xPos = n => m.l + (N ? n / N : 0) * pw;
+  const yPos = j => m.t + (N - j) / Math.max(1, 2 * N) * ph;
+  const map = new Map(); spec.levels.forEach((level, n) => level.forEach(node => map.set(n + ':' + node.j, node)));
+  let o = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img">`;
+  [0, Math.ceil(N/2), N].forEach(n => { o += `<line class="grid" x1="${xPos(n)}" x2="${xPos(n)}" y1="${m.t}" y2="${m.t + ph}"/><text x="${xPos(n)}" y="${H-18}" text-anchor="middle">Paso ${n}</text>`; });
+  spec.edges.forEach(e => {
+    const a = map.get(e.n + ':' + e.j), b = map.get((e.n + 1) + ':' + e.to); if (!a || !b) return;
+    o += `<line x1="${xPos(e.n)}" y1="${yPos(a.j)}" x2="${xPos(e.n+1)}" y2="${yPos(b.j)}" stroke="#91a8bd" stroke-width="${0.7 + Math.min(1.2, e.prob*2)}" opacity=".7"/>`;
+  });
+  spec.levels.forEach((level, n) => level.forEach(node => {
+    o += `<circle cx="${xPos(n)}" cy="${yPos(node.j)}" r="${n===N?3.5:2.7}" fill="${n===N?'#1f77b4':'#5b91b8'}" stroke="#fff" stroke-width=".5"/>`;
+  }));
+  o += `<text class="alabel" x="${W/2}" y="${H-3}" text-anchor="middle">Tiempo (pasos)</text><text class="alabel" transform="translate(13 ${H/2}) rotate(-90)" text-anchor="middle">Nodos de precio (índice j)</text></svg>`;
+  return { svg: o };
+}
+
+// ── Etiquetas y tabla de escenarios ──────────────────────────────────────────
+const EQUITY = { v0: 0.04, kappa: 2.0, theta: 0.04, xi: 0.5, rho: -0.7 };
+const SQUEEZE = { v0: 0.04, kappa: 2.0, theta: 0.04, xi: 0.5, rho: 0.5 };
+
+function scenarioTable() {
+  const rows = [
+    ['🔴 Crash −20% (acciones)', EQUITY, 0.7, -0.20], ['🟠 Susto −5% (acciones)', EQUITY, 0.7, -0.05],
+    ['🟢 Rally de alivio +10% (acciones)', EQUITY, 0.7, 0.10], ['🟢 Squeeze / spike +20% (commodity)', SQUEEZE, -0.5, 0.20],
+    ['🔴 Desplome −10% (commodity)', SQUEEZE, -0.5, -0.10]];
+  let h = '<table class="tbl"><thead><tr><th>Escenario</th><th>Spot</th><th>Vol ATM</th><th>Skew (pts)</th><th>Convexidad (pts)</th></tr></thead><tbody>';
+  rows.forEach(([n, par, beta, s]) => {
+    const b = eventoHeston(0, par, beta, 0.3, 1).res, a = eventoHeston(s, par, beta, 0.3, 1);
+    h += `<tr><td>${n}</td><td>${S0} → ${a.S1.toFixed(0)} (${pctS(s)})</td><td>${pct(b.atm)} → <b>${pct(a.res.atm)}</b></td>` +
+         `<td>${pts(b.skew)} → <b>${pts(a.res.skew)}</b></td><td>${pts(b.conv)} → <b>${pts(a.res.conv)}</b></td></tr>`;
+  });
+  return h + '</tbody></table>';
+}
+
+// ── Definición de las secciones interactivas ─────────────────────────────────
+const info = (res, extra) => `<b>Vol ATM</b> ${pct(res.atm)} · <b>Skew</b> (vol 90% − vol 110%) ${pts(res.skew)} pts · <b>Convexidad</b> ${pts(res.conv)} pts` + (extra ? `<br>${extra}` : '');
+const f1 = v => v.toFixed(1), f2 = v => v.toFixed(2);
+
+const SECTIONS = [
+  { // 1 — Black-Scholes vs mercado (Merton)
+    id: 's1', charts: 2,
+    controls: [
+      { id: 'sigma', label: 'Vol de la difusión σ', min: 5, max: 40, step: 1, value: 16, fmt: v => v + '%' },
+      { id: 'lam', label: 'Saltos por año λ', min: 0, max: 3, step: 0.1, value: 0.8, fmt: f1 },
+      { id: 'muJ', label: 'Salto medio μJ', min: -0.3, max: 0.3, step: 0.01, value: -0.10, fmt: v => pctS(v), play: true },
+      { id: 'sigJ', label: 'Dispersión del salto σJ', min: 0.02, max: 0.3, step: 0.01, value: 0.12, fmt: v => pct(v, 0) }],
+    presets: [
+      { label: 'Sin saltos (= Black-Scholes)', set: { lam: 0 } },
+      { label: '📉 Mercado de acciones', set: { sigma: 16, lam: 0.8, muJ: -0.10, sigJ: 0.12 } },
+      { label: '📈 Squeeze / commodity', set: { sigma: 16, lam: 0.8, muJ: 0.10, sigJ: 0.12 } }],
+    draw(v) {
+      const P = { sigma: v.sigma / 100, lam: v.lam, muJ: v.muJ, sigJ: v.sigJ }, px = K => mertonCall(S0, K, T0, P);
+      const iv = impliedVol(px(STRIKES), S0, STRIKES, T0).map(x => x * 100), res = resumenSmile(px, S0, T0);
+      const Kd = range(55, 160, 0.5), h = 0.5, dens = C => C.map((c, i) => (i === 0 || i === C.length - 1) ? NaN : (C[i + 1] - 2 * c + C[i - 1]) / (h * h) * Math.exp(RF * T0));
+      const dm = dens(mertonCall(S0, Kd, T0, P)), db = dens(bsCall(S0, Kd, T0, res.atm));
+      return {
+        charts: [
+          { type: 'line', title: 'Volatilidad implícita por strike', xLabel: 'Strike', yLabel: 'Vol implícita (%)', yStep: 5, vlines: [{ x: S0, label: 'spot' }],
+            series: [{ x: STRIKES, y: STRIKES.map(() => res.atm * 100), color: COL.antes, dash: '7 5', name: 'Black-Scholes (plana)', width: 2.2 },
+                     { x: STRIKES, y: iv, color: COL.baja, name: 'Mercado (con saltos)', markers: true }] },
+          { type: 'line', title: 'Distribución implícita del precio a 3 meses', xLabel: 'Precio a 3 meses', yLabel: 'Densidad', ymin: 0, xmin: 55, xmax: 160, decimals: 4,
+            series: [{ x: Kd, y: db, color: COL.antes, dash: '7 5', name: 'Lognormal (BS)', width: 2.2 }, { x: Kd, y: dm, color: COL.baja, area: true, name: 'Mercado' }] }],
+        info: info(res, etiquetaTipo(res.skew))
+      };
+    }
+  },
+  { // 2 — Zoológico
+    id: 's2', charts: 1,
+    controls: [
+      { id: 'm', label: 'Tamaño del salto |μJ|', min: 0.02, max: 0.3, step: 0.01, value: 0.12, fmt: v => pct(v, 0), play: true },
+      { id: 'lam', label: 'Saltos por año λ', min: 0.1, max: 3, step: 0.1, value: 0.8, fmt: f1 },
+      { id: 'sigJ', label: 'Dispersión del salto σJ', min: 0.02, max: 0.3, step: 0.01, value: 0.12, fmt: v => pct(v, 0) }],
+    draw(v) {
+      const tipos = [['FX · sonrisa simétrica', 0, COL.azul], ['Acciones · smirk bajista', -v.m, COL.baja], ['Commodities / squeeze · smirk alcista', v.m, COL.suba]];
+      const series = [], filas = [];
+      tipos.forEach(([n, mu, c]) => {
+        const P = { sigma: 0.16, lam: v.lam, muJ: mu, sigJ: v.sigJ }, px = K => mertonCall(S0, K, T0, P);
+        series.push({ x: STRIKES, y: impliedVol(px(STRIKES), S0, STRIKES, T0).map(x => x * 100), color: c, name: n, markers: true });
+        const r = resumenSmile(px, S0, T0); filas.push(`<span style="color:${c}">■</span> ${n.split(' · ')[0]}: skew ${pts(r.skew)} · convexidad ${pts(r.conv)}`);
+      });
+      return { charts: [{ type: 'line', title: 'Tres sonrisas, tres miedos distintos', xLabel: 'Strike', yLabel: 'Vol implícita (%)', yStep: 5, vlines: [{ x: S0, label: 'spot' }], series }],
+               info: filas.join(' &nbsp;|&nbsp; ') };
+    }
+  },
+  { // 3 — Heston
+    id: 's3', charts: 1,
+    controls: [
+      { id: 'rho', label: 'Correlación spot-vol ρ', min: -0.95, max: 0.95, step: 0.05, value: -0.7, fmt: v => (v >= 0 ? '+' : '') + v.toFixed(2), play: true },
+      { id: 'xi', label: 'Vol de la vol ξ', min: 0.05, max: 1.2, step: 0.05, value: 0.5, fmt: f2, play: true },
+      { id: 'kappa', label: 'Reversión κ', min: 0.3, max: 6, step: 0.1, value: 2, fmt: f1 },
+      { id: 'vol', label: 'Vol base', min: 10, max: 50, step: 1, value: 20, fmt: v => v + '%' },
+      { id: 'meses', label: 'Vencimiento (meses)', min: 1, max: 12, step: 1, value: 3, fmt: v => v + (v === 1 ? ' mes' : ' meses') }],
+    presets: [
+      { label: '📉 Acciones (ρ = −0.7)', set: { rho: -0.7, xi: 0.5 } },
+      { label: '💱 FX (ρ = 0)', set: { rho: 0, xi: 0.5 } },
+      { label: '🛢️ Commodities (ρ = +0.5)', set: { rho: 0.5, xi: 0.5 } },
+      { label: 'Casi Black-Scholes (ξ → 0)', set: { xi: 0.05 } }],
+    draw(v) {
+      const T = v.meses / 12, p = { v0: v.vol * v.vol / 1e4, kappa: v.kappa, theta: v.vol * v.vol / 1e4, xi: v.xi, rho: v.rho };
+      const px = K => hestonCall(S0, K, T, p), iv = impliedVol(px(STRIKES), S0, STRIKES, T).map(x => x * 100), res = resumenSmile(px, S0, T);
+      return { charts: [{ type: 'line', title: `Heston · ${v.meses} ${v.meses === 1 ? 'mes' : 'meses'} al vencimiento`, xLabel: 'Strike', yLabel: 'Vol implícita (%)', yStep: 5, vlines: [{ x: S0, label: 'spot' }],
+        series: [{ x: STRIKES, y: STRIKES.map(() => res.atm * 100), color: COL.antes, dash: '7 5', name: 'Black-Scholes (plana)', width: 2.2 },
+                 { x: STRIKES, y: iv, color: COL.naranja, name: 'Heston', markers: true }] }], info: info(res, etiquetaTipo(res.skew)) };
+    }
+  },
+  { // 4 — Tiempo y superficie
+    id: 's4', charts: 2, deps: ['s3'],
+    controls: [],
+    draw(v, get) {
+      const h = get('s3'), p = { v0: h.vol * h.vol / 1e4, kappa: h.kappa, theta: h.vol * h.vol / 1e4, xi: h.xi, rho: h.rho };
+      const mats = [1, 2, 3, 6, 9, 12], paleta = ['#08306b', '#2171b5', '#4292c6', '#6baed6', '#9ecae1', '#c6dbef'], meses = range(1, 12, 1);
+      const surf = meses.map(mm => impliedVol(hestonCall(S0, STRIKES, mm / 12, p), S0, STRIKES, mm / 12).map(x => x * 100));
+      const series = mats.map((mm, i) => ({ x: STRIKES, y: surf[mm - 1], color: paleta[i], name: mm === 12 ? '1 año' : mm + (mm === 1 ? ' mes' : ' m'), width: 2.8 }));
+      return { charts: [
+        { type: 'surface3d', title: 'Superficie 3D de volatilidad implícita · arrastrá para rotar', span: true, xLabel: 'Strike', yLabel: 'Vencimiento (meses)', zLabel: 'Vol implícita (%)', x: STRIKES, y: meses, z: surf },
+        { type: 'line', title: 'Una sonrisa por vencimiento', span: true, xLabel: 'Strike', yLabel: 'Vol implícita (%)', yStep: 5, series, vlines: [{ x: S0 }] }],
+        info: `Parámetros tomados de la sección anterior: ρ = ${h.rho.toFixed(2)}, ξ = ${h.xi.toFixed(2)}, κ = ${h.kappa.toFixed(1)}, vol base = ${h.vol}%.` };
+    }
+  },
+  { // 5 — Eventos inesperados
+    id: 's5', charts: 1,
+    controls: [
+      { id: 'shock', label: 'Shock al spot', min: -0.25, max: 0.25, step: 0.005, value: -0.15, fmt: v => pctS(v, 1), play: true },
+      { id: 'beta', label: 'β: vol ATM por unidad de retorno', min: -1, max: 1.5, step: 0.05, value: 0.7, fmt: f2 },
+      { id: 'persist', label: 'Persistencia de la vol de largo plazo', min: 0, max: 1, step: 0.05, value: 0.3, fmt: f2 },
+      { id: 'panico', label: 'Pánico (sube ξ en el escenario adverso)', min: 0, max: 2, step: 0.1, value: 1, fmt: f1 },
+      { id: 'rho', label: 'Correlación spot-vol ρ', min: -0.95, max: 0.95, step: 0.05, value: -0.7, fmt: v => (v >= 0 ? '+' : '') + v.toFixed(2) },
+      { id: 'xi', label: 'Vol de la vol ξ', min: 0.1, max: 1.2, step: 0.05, value: 0.5, fmt: f2 }],
+    presets: [
+      { label: '📉 Acciones: crash −15%', set: { rho: -0.7, beta: 0.7, shock: -0.15 } },
+      { label: '📈 Acciones: rally +10%', set: { rho: -0.7, beta: 0.7, shock: 0.10 } },
+      { label: '🛢️ Commodity: squeeze +15%', set: { rho: 0.5, beta: -0.5, shock: 0.15 } },
+      { label: '🛢️ Commodity: desplome −10%', set: { rho: 0.5, beta: -0.5, shock: -0.10 } }],
+    draw(v) {
+      const base = { v0: 0.04, kappa: 2, theta: 0.04, xi: v.xi, rho: v.rho };
+      const b = eventoHeston(0, base, v.beta, v.persist, v.panico), a = eventoHeston(v.shock, base, v.beta, v.persist, v.panico);
+      const c = v.shock < 0 ? COL.baja : v.shock > 0 ? COL.suba : COL.azul, all = b.iv.concat(a.iv).filter(isFinite);
+      const y0 = Math.floor(Math.min.apply(null, all) / 5) * 5, y1 = Math.ceil(Math.max.apply(null, all) / 5) * 5;
+      return { charts: [{ type: 'line', title: `Evento: spot ${pctS(v.shock, 1)} (de ${S0} a ${a.S1.toFixed(1)})`, xLabel: 'Strike (fijo: son los strikes que ya cotizan)', yLabel: 'Vol implícita (%)', ymin: y0, ymax: y1,
+        vlines: [{ x: S0, label: 'spot inicial' }, { x: a.S1, color: c, label: 'spot nuevo' }], points: [{ x: a.S1, y: a.res.atm * 100, color: c }],
+        series: [{ x: STRIKES, y: b.iv, color: COL.antes, dash: '7 5', name: 'Antes del evento', markers: true }, { x: STRIKES, y: a.iv, color: c, name: 'Después del evento', width: 3.6, markers: true }] }],
+        info: `<b>Vol ATM</b> ${pct(b.res.atm)} → <b>${pct(a.res.atm)}</b> · <b>Skew</b> ${pts(b.res.skew)} → <b>${pts(a.res.skew)}</b> pts · <b>Convexidad</b> ${pts(b.res.conv)} → <b>${pts(a.res.conv)}</b> pts<br>${etiquetaTipo(a.res.skew)}` };
+    }
+  },
+  { // 6 — Evento con fecha
+    id: 's6', charts: 2,
+    controls: [
+      { id: 'J', label: 'Tamaño del salto del evento', min: 0, max: 0.15, step: 0.005, value: 0.05, fmt: v => '±' + pct(v, 1), play: true },
+      { id: 'dia', label: 'Día del evento', min: 1, max: 60, step: 1, value: 14, fmt: v => 'día ' + v },
+      { id: 'venc', label: 'Vencimiento de la sonrisa (días)', min: 7, max: 90, step: 1, value: 30, fmt: v => v + ' d' },
+      { id: 'vol', label: 'Vol base', min: 10, max: 40, step: 1, value: 18, fmt: v => v + '%' }],
+    presets: [
+      { label: '📊 Balance trimestral (±5%)', set: { J: 0.05, dia: 14, venc: 30 } },
+      { label: '🗳️ Elecciones (±10%)', set: { J: 0.10, dia: 20, venc: 45 } },
+      { label: '😴 Sin evento', set: { J: 0 } }],
+    draw(v) {
+      const sig = v.vol / 100, tEv = v.dia / 365, Tm = v.venc / 365, J = Math.max(v.J, 1e-6), Ks = range(80, 120, 1);
+      const jumps = t => t === 0 ? [J, J] : t === 1 ? [0.5 * J, 1.6 * J] : [1.6 * J, 0.5 * J];
+      const smile = t => { const [a, b] = jumps(t); return impliedVol(eventoCall(S0, Ks, Tm, sig, tEv, a, b), S0, Ks, Tm).map(x => x * 100); };
+      const nombres = [['Simétrico', COL.azul], ['Cola bajista', COL.baja], ['Cola alcista', COL.suba]];
+      const dias = range(3, 90, 3), term = (JJ) => dias.map(d => { const T = d / 365, F = fwd(S0, T); return impliedVol(eventoCall(S0, [F], T, sig, tEv, JJ, JJ), S0, [F], T)[0] * 100; });
+      const hayEvento = v.venc > v.dia;
+      return { charts: [
+        { type: 'line', title: `Curva de vol a ${v.venc} días según el tipo de sorpresa`, xLabel: 'Strike', yLabel: 'Vol implícita (%)', yStep: 5, vlines: [{ x: S0, label: 'spot' }],
+          series: nombres.map(([n, c], t) => ({ x: Ks, y: smile(t), color: c, name: n })) },
+        { type: 'line', title: 'Vol ATM por vencimiento (¿incluye el evento?)', xLabel: 'Días al vencimiento', yLabel: 'Vol ATM (%)', yStep: 5, vlines: [{ x: v.dia, color: COL.violeta, dash: '5 4', label: 'día del evento' }],
+          series: [{ x: dias, y: dias.map(() => v.vol), color: COL.antes, dash: '7 5', name: 'Sin evento', width: 2.2 }, { x: dias, y: term(J), color: COL.naranja, name: 'Con evento', markers: true }] }],
+        info: hayEvento ? `El evento (día ${v.dia}) cae <b>dentro</b> del plazo de ${v.venc} días: la opción lo "ve" y por eso la curva se deforma.`
+                        : `⚠️ La opción de ${v.venc} días vence <b>antes</b> del evento (día ${v.dia}): no lo ve, la curva es plana. Subí el vencimiento o bajá el día del evento.` };
+    }
+  },
+  { // 7 — Dupire
+    id: 's7', charts: 2,
+    controls: [
+      { id: 'atm', label: 'Vol ATM de la superficie (%)', min: 12, max: 40, step: 1, value: 22, fmt: v => v + '%' },
+      { id: 'skew', label: 'Skew dσ/dln(K/F)', min: -0.6, max: 0.6, step: 0.05, value: -0.25, fmt: f2 },
+      { id: 'conv', label: 'Curvatura cuadrática', min: 0, max: 0.8, step: 0.05, value: 0.25, fmt: f2 },
+      { id: 'term', label: 'Efecto temporal (puntos de vol/√año)', min: -10, max: 10, step: 1, value: 0, fmt: v => (v > 0 ? '+' : '') + v + ' pt' },
+      { id: 'meses', label: 'Vencimiento de la curva de comparación', min: 1, max: 12, step: 1, value: 6, fmt: v => v + ' m' }
+    ],
+    presets: [
+      { label: '📉 Equity skew', set: { atm: 22, skew: -0.25, conv: 0.25, term: 0 } },
+      { label: '💱 FX sonrisa', set: { atm: 12, skew: 0, conv: 0.55, term: 0 } },
+      { label: '📈 Skew alcista', set: { atm: 30, skew: 0.28, conv: 0.25, term: 2 } }
+    ],
+    draw(v) {
+      const K = range(75, 125, 2), T = range(1, 12, 1).map(m => m / 12), p = { atm: v.atm, skew: v.skew, conv: v.conv, term: v.term / 100 };
+      const surf = T.map(t => K.map(k => dupireLocalVol(k, t, p) * 100));
+      const idx = Math.max(0, Math.min(T.length - 1, v.meses - 1)), tm = T[idx];
+      const market = K.map(k => marketSurfaceVol(k, tm, p) * 100), loc = surf[idx];
+      const valid = surf.reduce((n, row) => n + row.filter(Number.isFinite).length, 0), total = K.length * T.length;
+      return { charts: [
+        { type: 'surface3d', title: 'Dupire · volatilidad local σloc(K,T)', span: true, x: K, y: T.map(t => Math.round(t * 12)), z: surf, xLabel: 'Strike', yLabel: 'Vencimiento (meses)', zLabel: 'Vol local (%)' },
+        { type: 'line', title: `Volatilidad local vs. implícita a ${v.meses} meses`, span: true, xLabel: 'Strike', yLabel: 'Volatilidad (%)', vlines: [{ x: S0, label: 'spot' }],
+          series: [{ x: K, y: market, color: COL.antes, dash: '7 5', name: 'Implícita de entrada' }, { x: K, y: loc, color: COL.azul, name: 'Local Dupire', markers: true }] }
+      ], info: `<b>Superficie:</b> ${K.length} strikes × ${T.length} vencimientos. Derivadas por diferencias finitas; ${valid}/${total} nodos con varianza local positiva. El filtrado numérico de extremos evita explosiones, pero no reemplaza una superficie de mercado libre de arbitraje.` };
+    }
+  },
+  { // 8 — Derman-Kani educational trinomial tree
+    id: 's8', charts: 2,
+    controls: [
+      { id: 'atm', label: 'Vol ATM de la superficie (%)', min: 12, max: 40, step: 1, value: 22, fmt: v => v + '%' },
+      { id: 'skew', label: 'Skew dσ/dln(K/F)', min: -0.6, max: 0.6, step: 0.05, value: -0.25, fmt: f2 },
+      { id: 'conv', label: 'Curvatura cuadrática', min: 0, max: 0.8, step: 0.05, value: 0.25, fmt: f2 },
+      { id: 'steps', label: 'Pasos del árbol (1 año)', min: 4, max: 12, step: 1, value: 8, fmt: v => v + ' pasos' }
+    ],
+    presets: [
+      { label: '📉 Equity skew', set: { atm: 22, skew: -0.25, conv: 0.25, steps: 8 } },
+      { label: '💱 Smile simétrica', set: { atm: 15, skew: 0, conv: 0.55, steps: 10 } }
+    ],
+    draw(v) {
+      const N = Math.round(v.steps), T = 1, dt = T / N, p = { atm: v.atm, skew: v.skew, conv: v.conv, term: 0 };
+      const scanKs = range(75, 125, 2), scanTs = range(1, 12, 1).map(m => m / 12);
+      let sigMax = 0.2;
+      scanTs.forEach(t => scanKs.forEach(k => { const sig = dupireLocalVol(k, t, p); if (Number.isFinite(sig)) sigMax = Math.max(sigMax, Math.min(sig, 0.75)); }));
+      const dx = Math.max(0.06, 2 * sigMax * Math.sqrt(dt));
+      let probs = { 0: 1 }; const levels = [[{ j: 0, S: S0, prob: 1 }]], edges = [];
+      for (let n = 0; n < N; n++) {
+        const next = {};
+        for (let j = -n; j <= n; j++) {
+          const mass = probs[j] || 0, spot = S0 * Math.exp(j * dx), sig0 = dupireLocalVol(spot, Math.max(0.01, n * dt), p);
+          const sig = Number.isFinite(sig0) ? Math.max(0.06, Math.min(0.75, sig0)) : v.atm / 100;
+          const qsum = Math.min(0.78, Math.max(0.01, sig * sig * dt / (dx * dx)));
+          let diff = (Math.exp((RF - DIV) * dt) - 1 - qsum * (Math.cosh(dx) - 1)) / Math.sinh(dx);
+          diff = Math.max(-qsum * 0.98, Math.min(qsum * 0.98, diff));
+          const pu = Math.max(0, (qsum + diff) / 2), pd = Math.max(0, (qsum - diff) / 2), pm = Math.max(0, 1 - pu - pd);
+          edges.push({ n, j, to: j + 1, prob: pu }); edges.push({ n, j, to: j, prob: pm }); edges.push({ n, j, to: j - 1, prob: pd });
+          next[j + 1] = (next[j + 1] || 0) + mass * pu; next[j] = (next[j] || 0) + mass * pm; next[j - 1] = (next[j - 1] || 0) + mass * pd;
+        }
+        probs = next;
+        const level = []; for (let j = -(n + 1); j <= n + 1; j++) level.push({ j, S: S0 * Math.exp(j * dx), prob: probs[j] || 0 });
+        levels.push(level);
+      }
+      const Ks = range(70, 130, 2), df = Math.exp(-RF * T), terminal = levels[N];
+      const prices = Ks.map(K => df * terminal.reduce((sum, node) => sum + node.prob * Math.max(node.S - K, 0), 0));
+      const treeIV = impliedVol(prices, S0, Ks, T).map(x => x * 100), marketIV = Ks.map(K => marketSurfaceVol(K, T, p) * 100);
+      const mass = terminal.reduce((sum, n) => sum + n.prob, 0), expS = terminal.reduce((sum, n) => sum + n.prob * n.S, 0);
+      return { charts: [
+        { type: 'tree', title: `Árbol trinomial estilo Derman–Kani · ${N} pasos`, span: true, levels, edges, width: 1000, height: 390 },
+        { type: 'line', title: 'Sonrisa terminal del árbol vs. superficie de entrada', span: true, xLabel: 'Strike', yLabel: 'Vol implícita (%)', vlines: [{ x: S0, label: 'spot' }],
+          series: [{ x: Ks, y: marketIV, color: COL.antes, dash: '7 5', name: 'Implícita de entrada' }, { x: Ks, y: treeIV, color: COL.violeta, name: 'Árbol trinomial', markers: true }] }
+      ], info: `<b>Masa terminal:</b> ${mass.toFixed(6)} · <b>E[S₁]</b> = ${expS.toFixed(2)} (forward teórico ${fwd(S0, 1).toFixed(2)}) · <b>Δ log-precio:</b> ${dx.toFixed(3)}. El árbol aproxima una dinámica local y puede no reproducir exactamente todas las calls de entrada; eso distingue esta demo de un árbol implícito plenamente calibrado.` };
+    }
+  },
+  { // 9 — SABR Hagan
+    id: 's9', charts: 2,
+    controls: [
+      { id: 'alpha', label: 'α — escala SABR (unidades dependen de F y β)', min: 0.1, max: 5, step: 0.1, value: 2.2, fmt: v => v.toFixed(1) },
+      { id: 'beta', label: 'β — elasticidad del forward', min: 0, max: 1, step: 0.05, value: 0.5, fmt: f2 },
+      { id: 'rho', label: 'ρ — correlación forward-vol', min: -0.95, max: 0.95, step: 0.05, value: -0.25, fmt: v => (v > 0 ? '+' : '') + v.toFixed(2) },
+      { id: 'nu', label: 'ν — vol de la vol', min: 0.05, max: 1.5, step: 0.05, value: 0.6, fmt: f2 },
+      { id: 'meses', label: 'Vencimiento', min: 1, max: 24, step: 1, value: 6, fmt: v => v + ' m' }
+    ],
+    presets: [
+      { label: '📉 Skew negativo', set: { alpha: 2.2, beta: 0.5, rho: -0.4, nu: 0.6 } },
+      { label: '💱 Smile simétrica', set: { alpha: 1.8, beta: 0.5, rho: 0, nu: 0.7 } },
+      { label: '📈 Skew positivo', set: { alpha: 2.5, beta: 0.7, rho: 0.45, nu: 0.5 } }
+    ],
+    draw(v) {
+      const T = v.meses / 12, F = fwd(S0, T), Ks = range(70, 130, 2), p = { alpha: v.alpha, beta: v.beta, rho: v.rho, nu: v.nu };
+      const iv = Ks.map(K => sabrImpliedVol(F, K, T, p) * 100), prices = Ks.map((K, i) => black(F, K, Math.pow(iv[i] / 100, 2) * T, Math.exp(-RF * T), 1));
+      return { charts: [
+        { type: 'line', title: `SABR (Hagan) · sonrisa a ${v.meses} meses`, xLabel: 'Strike', yLabel: 'Vol implícita (%)', vlines: [{ x: F, label: 'forward' }], series: [{ x: Ks, y: iv, color: COL.naranja, name: 'SABR', markers: true }] },
+        { type: 'line', title: 'Precio teórico de calls generado por SABR', xLabel: 'Strike', yLabel: 'Precio de call', vlines: [{ x: F, label: 'forward' }], series: [{ x: Ks, y: prices, color: COL.azul, name: 'Call SABR', markers: true }] }
+      ], info: `<b>Forward:</b> ${F.toFixed(2)} · <b>α:</b> ${p.alpha.toFixed(2)} (unidades dependen de F y β) · <b>β:</b> ${p.beta.toFixed(2)} · <b>ρ:</b> ${p.rho.toFixed(2)} · <b>ν:</b> ${p.nu.toFixed(2)} · <b>Vol ATM:</b> ${(sabrImpliedVol(F,F,T,p)*100).toFixed(2)}%. La fórmula de Hagan es una aproximación asintótica y debe tratarse con cautela en extremos de strike/vencimiento.` };
+    }
+  },
+  { // 10 — Bates
+    id: 's10', charts: 2,
+    controls: [
+      { id: 'vol', label: 'Volatilidad inicial / largo plazo', min: 10, max: 45, step: 1, value: 20, fmt: v => v + '%' },
+      { id: 'rho', label: 'Correlación spot-vol ρ', min: -0.95, max: 0.95, step: 0.05, value: -0.7, fmt: v => (v > 0 ? '+' : '') + v.toFixed(2) },
+      { id: 'xi', label: 'Vol de la vol ξ', min: 0.05, max: 1.2, step: 0.05, value: 0.45, fmt: f2 },
+      { id: 'kappa', label: 'Reversión κ', min: 0.3, max: 6, step: 0.1, value: 2, fmt: f1 },
+      { id: 'lam', label: 'Frecuencia de saltos λ (por año)', min: 0, max: 3, step: 0.1, value: 0.8, fmt: f1 },
+      { id: 'muJ', label: 'Salto log medio μJ', min: -0.25, max: 0.15, step: 0.01, value: -0.08, fmt: f2 },
+      { id: 'sigJ', label: 'Dispersión del salto σJ', min: 0.05, max: 0.5, step: 0.01, value: 0.18, fmt: f2 }
+    ],
+    presets: [
+      { label: '🟦 Heston puro (λ = 0)', set: { lam: 0 } },
+      { label: '📉 Riesgo de crash', set: { lam: 1.2, muJ: -0.12, sigJ: 0.2 } },
+      { label: '📈 Saltos alcistas', set: { lam: 0.8, muJ: 0.08, sigJ: 0.15 } }
+    ],
+    draw(v) {
+      const Ks = STRIKES, T = T0;
+      const p = { v0: Math.pow(v.vol / 100, 2), theta: Math.pow(v.vol / 100, 2), kappa: v.kappa, xi: v.xi, rho: v.rho,
+        lam: v.lam, muJ: v.muJ, sigJ: v.sigJ };
+      const bates = impliedVol(batesCall(S0, Ks, T, p), S0, Ks, T).map(x => x * 100);
+      const hestonP = { v0: p.v0, theta: p.theta, kappa: p.kappa, xi: p.xi, rho: p.rho };
+      const heston = impliedVol(hestonCall(S0, Ks, T, hestonP), S0, Ks, T).map(x => x * 100);
+      const months = range(1, 12, 1), atmB = months.map(m => { const tm=m/12, k=fwd(S0,tm); return impliedVol(batesCall(S0,[k],tm,p),S0,[k],tm)[0]*100; });
+      const atmH = months.map(m => { const tm=m/12, k=fwd(S0,tm); return impliedVol(hestonCall(S0,[k],tm,hestonP),S0,[k],tm)[0]*100; });
+      return { charts: [
+        { type: 'line', title: 'Bates vs. Heston · sonrisa a 3 meses', xLabel: 'Strike', yLabel: 'Vol implícita (%)', vlines: [{ x: S0, label: 'spot' }],
+          series: [{ x: Ks, y: heston, color: COL.antes, dash: '7 5', name: 'Heston sin saltos' }, { x: Ks, y: bates, color: COL.violeta, name: 'Bates', markers: true }] },
+        { type: 'line', title: 'Estructura temporal de la vol ATM', xLabel: 'Vencimiento (meses)', yLabel: 'Vol ATM (%)',
+          series: [{ x: months, y: atmH, color: COL.antes, dash: '7 5', name: 'Heston' }, { x: months, y: atmB, color: COL.naranja, name: 'Bates', markers: true }] }
+      ], info: `<b>λ:</b> ${v.lam.toFixed(1)} saltos/año · <b>μJ:</b> ${v.muJ.toFixed(2)} · <b>σJ:</b> ${v.sigJ.toFixed(2)} · <b>ρ:</b> ${v.rho.toFixed(2)}. Con λ = 0, Bates debe coincidir con Heston; al aumentar λ, la frecuencia de saltos modifica nivel, skew y colas. Los valores son ilustrativos, no estimaciones de mercado.` };
+    }
+  }
+];
+
+// ── Interfaz (solo navegador) ────────────────────────────────────────────────
+function renderChart(spec) { if (spec.type === 'heat') return heatChart(spec); if (spec.type === 'surface3d') return surface3dChart(spec); if (spec.type === 'tree') return treeChart(spec); return lineChart(spec); }
+
+function attachHover(div, spec, geom) {
+  const svg = div.querySelector('svg'); if (!svg) return;
+  const tip = document.createElement('div'); tip.className = 'tip'; tip.style.display = 'none'; div.appendChild(tip);
+  const xh = svg.querySelector('.xh');
+  const hide = () => { tip.style.display = 'none'; if (xh) xh.style.display = 'none'; };
+  svg.addEventListener('pointerleave', hide);
+  svg.addEventListener('pointermove', ev => {
+    const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / r.width * geom.W, py = (ev.clientY - r.top) / r.height * geom.H, m = geom.m;
+    if (px < m.l || px > geom.W - m.r || py < m.t || py > geom.H - m.b) return hide();
+    let html = '';
+    if (spec.type === 'heat') {
+      const i = Math.min(geom.nx - 1, Math.floor((px - m.l) / geom.pw * geom.nx)), j = Math.min(geom.ny - 1, Math.floor((1 - (py - m.t) / geom.ph) * geom.ny));
+      html = `Strike ${spec.x[i]} · ${spec.y[j]} m<br><b>Vol ${isFinite(spec.z[j][i]) ? spec.z[j][i].toFixed(1) + '%' : '—'}</b>`;
+    } else {
+      const xv = geom.xmin + (px - m.l) / geom.pw * (geom.xmax - geom.xmin), s0 = spec.series[0];
+      let bi = 0, bd = Infinity; s0.x.forEach((vv, i) => { const d = Math.abs(vv - xv); if (d < bd) { bd = d; bi = i; } });
+      const X = m.l + (s0.x[bi] - geom.xmin) / (geom.xmax - geom.xmin) * geom.pw;
+      if (xh) { xh.setAttribute('x1', X); xh.setAttribute('x2', X); xh.style.display = ''; }
+      html = `<b>${+s0.x[bi].toFixed(2)}</b>` + spec.series.filter(s => s.name).map(s => `<br><span style="color:${s.color}">■</span> ${esc(s.name)}: ${isFinite(s.y[bi]) ? s.y[bi].toFixed(spec.decimals || 1) : '—'}`).join('');
+    }
+    tip.innerHTML = html; tip.style.display = 'block';
+    const w = div.getBoundingClientRect(), left = ev.clientX - w.left + 14;
+    tip.style.left = Math.min(left, w.width - tip.offsetWidth - 6) + 'px'; tip.style.top = (ev.clientY - w.top + 12) + 'px';
+  });
+}
+
+function mountSection(def, VALUES, notify) {
+  const root = document.getElementById('w-' + def.id); if (!root) return null;
+  const vals = VALUES[def.id] = {};
+  def.controls.forEach(c => vals[c.id] = c.value);
+  const mk = (tag, cls) => { const e = document.createElement(tag); if (cls) e.className = cls; return e; };
+  const inputs = {}, labels = {}, timers = {};
+  if (def.presets && def.presets.length) {
+    const pr = mk('div', 'presets'); root.appendChild(pr);
+    def.presets.forEach(p => { const b = mk('button', 'chip'); b.textContent = p.label; b.addEventListener('click', () => { stopAll(); Object.keys(p.set).forEach(k => setVal(k, p.set[k])); update(); }); pr.appendChild(b); });
+  }
+  if (def.controls.length) {
+    const grid = mk('div', 'controls'); root.appendChild(grid);
+    def.controls.forEach(c => {
+      const row = mk('div', 'ctrl'), top = mk('div', 'ctop'), lab = mk('label'), val = mk('span', 'cval'), inp = mk('input');
+      lab.textContent = c.label; inp.type = 'range'; inp.min = c.min; inp.max = c.max; inp.step = c.step; inp.value = c.value;
+      val.textContent = c.fmt(c.value); labels[c.id] = val; inputs[c.id] = inp;
+      top.appendChild(lab);
+      if (c.play) {
+        const pb = mk('button', 'play'); pb.textContent = '▶'; pb.title = 'Animar'; top.appendChild(pb);
+        pb.addEventListener('click', () => {
+          if (timers[c.id]) { stopAll(); return; }
+          stopAll(); pb.textContent = '⏸'; let dir = 1;
+          timers[c.id] = setInterval(() => {
+            let nv = vals[c.id] + dir * c.step * Math.max(1, Math.round((c.max - c.min) / c.step / 40));
+            if (nv >= c.max) { nv = c.max; dir = -1; } if (nv <= c.min) { nv = c.min; dir = 1; }
+            setVal(c.id, +nv.toFixed(6)); update();
+          }, 90);
+        });
+        row.playBtn = pb;
+      }
+      top.appendChild(val); row.appendChild(top); row.appendChild(inp); grid.appendChild(row);
+      inp.addEventListener('input', () => { stopAll(); setVal(c.id, parseFloat(inp.value)); update(); });
+    });
+  }
+  function stopAll() { Object.keys(timers).forEach(k => { clearInterval(timers[k]); delete timers[k]; }); root.querySelectorAll('.play').forEach(b => b.textContent = '▶'); }
+  function setVal(id, v) { const c = def.controls.find(x => x.id === id); if (!c) return; vals[id] = v; inputs[id].value = v; labels[id].textContent = c.fmt(v); }
+  const chartsBox = mk('div', 'charts' + (def.charts === 2 ? ' two' : '')); root.appendChild(chartsBox);
+
+  // Cada gráfico: barra (título + botones de pantalla completa) y cuerpo (donde se dibuja).
+  const cdivs = [], cbodies = [], ctitles = [], btnEnter = [], btnExit = [];
+  for (let i = 0; i < def.charts; i++) {
+    const d = mk('div', 'chart'), head = mk('div', 'chead'), ti = mk('div', 'ctitle'), body = mk('div', 'cbody');
+    const be = mk('button', 'fsbtn'), bx = mk('button', 'fsbtn fsexit');
+    be.type = 'button'; be.textContent = '⛶ Pantalla completa'; be.title = 'Ver el gráfico a pantalla completa';
+    bx.type = 'button'; bx.textContent = '✕ Salir de pantalla completa'; bx.title = 'Volver al tamaño normal'; bx.style.display = 'none';
+    be.addEventListener('click', () => enterFs(i)); bx.addEventListener('click', () => exitFs(i));
+    head.appendChild(ti); head.appendChild(be); head.appendChild(bx); d.appendChild(head); d.appendChild(body);
+    chartsBox.appendChild(d); cdivs.push(d); cbodies.push(body); ctitles.push(ti); btnEnter.push(be); btnExit.push(bx);
+  }
+  const infoBox = mk('div', 'info'); root.appendChild(infoBox);
+
+  function setFs(i, on) {
+    cdivs[i].classList.toggle('is-fs', on);
+    btnEnter[i].style.display = on ? 'none' : ''; btnExit[i].style.display = on ? '' : 'none';
+    document.body.style.overflow = (on && cdivs[i].classList.contains('fs-fallback')) ? 'hidden' : '';
+    setTimeout(paint, 80); // esperar a que el navegador termine el cambio de tamaño
+  }
+  function enterFs(i) {
+    const el = cdivs[i], fallback = () => { el.classList.add('fs-fallback'); setFs(i, true); };
+    if (el.requestFullscreen) { try { const pr = el.requestFullscreen(); if (pr && pr.catch) pr.catch(fallback); } catch (e) { fallback(); } }
+    else fallback();
+  }
+  function exitFs(i) {
+    const el = cdivs[i];
+    if (document.fullscreenElement === el && document.exitFullscreen) document.exitFullscreen();
+    else { el.classList.remove('fs-fallback'); setFs(i, false); }
+  }
+  document.addEventListener('fullscreenchange', () => cdivs.forEach((el, i) => {
+    const on = document.fullscreenElement === el, cur = el.classList.contains('is-fs');
+    if (on && !cur) setFs(i, true); else if (!on && cur && !el.classList.contains('fs-fallback')) setFs(i, false);
+  }));
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape') cdivs.forEach((el, i) => { if (el.classList.contains('fs-fallback')) exitFs(i); }); });
+
+  let queued = false;
+  function paint() {
+    queued = false;
+    const out = def.draw(vals, id => VALUES[id]);
+    out.charts.forEach((spec, i) => {
+      const cd = cdivs[i], body = cbodies[i], fs = cd.classList.contains('is-fs');
+      cd.style.gridColumn = spec.span ? '1 / -1' : '';
+      ctitles[i].textContent = spec.title || '';
+      if (spec.type === 'surface3d' && typeof window !== 'undefined' && window.Plotly) {
+        try { renderPlotly(body, spec); return; } catch (e) { if (window.console) console.warn('Plotly falló, uso visor propio', e); }
+      }
+      const cw = body.clientWidth;
+      if (cw > 0) {
+        spec.width = Math.max(300, Math.min(fs ? 3000 : 1100, Math.round(cw)));
+        if (fs) spec.height = Math.max(260, Math.round(body.clientHeight || 500));
+        else spec.height = spec.type === 'surface3d' ? 440 : spec.type === 'tree' ? 390 : Math.round(Math.max(290, Math.min(470, spec.width * 0.6)));
+      }
+      const r = renderChart(spec);
+      body.innerHTML = r.svg;
+      if (spec.type === 'surface3d') attachSurface3d(body, spec);
+      else if (spec.type !== 'tree') attachHover(body, spec, r.geom);
+    });
+    infoBox.innerHTML = out.info || '';
+  }
+  function update() {
+    if (!queued) { queued = true; (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : setTimeout)(paint); }
+    notify(def.id);
+  }
+  paint();
+  return { paint };
+}
+
+function boot() {
+  const VALUES = {}, mounted = {};
+  const notify = id => SECTIONS.forEach(s => { if (s.deps && s.deps.indexOf(id) >= 0 && mounted[s.id]) mounted[s.id].paint(); });
+  SECTIONS.forEach(s => { mounted[s.id] = mountSection(s, VALUES, notify); });
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    let rt = null, lastW = window.innerWidth;
+    window.addEventListener('resize', () => { if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rt); rt = setTimeout(() => SECTIONS.forEach(s => mounted[s.id] && mounted[s.id].paint()), 120); });
+  }
+  const tb = document.getElementById('scenario-table'); if (tb) tb.innerHTML = scenarioTable();
+  return mounted;
+}
+
+if (typeof document !== 'undefined' && document.getElementById && typeof window !== 'undefined') {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+}
+if (typeof module !== 'undefined') module.exports = { cdf, black, bsCall, impliedVol, mertonCall, hestonCall, batesCall, sabrImpliedVol, marketSurfaceVol, dupireLocalVol, buildDupireSurface, eventoCall, resumenSmile, eventoHeston, SECTIONS, renderChart, scenarioTable, lineChart, heatChart, surface3dChart, treeChart, STRIKES, boot, S0, T0, RF, EQUITY, SQUEEZE, range };
+
+</script>
+</body>
+</html>
